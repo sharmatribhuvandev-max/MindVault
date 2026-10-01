@@ -1,0 +1,20 @@
+import { BrainIcon } from "../icons/BrainIcon";
+import { TwitterIcon } from "../icons/TwitterIcon";
+import { YouTubeIcon } from "../icons/YoutubeIcon";
+import { SidebarItem } from "./SidebarItem";
+
+export function Sidebar() {
+    return <div className="h-screen bg-white w-72 fixed left-0 top-0 pl-6">
+        <div className="flex text-2xl pt-4 items-center">
+            <div className="pr-2">
+                <BrainIcon />
+            </div>
+            Brainly
+        </div>
+        <div className="pt-8 pl-4">
+            <SidebarItem text="Twitter" icon={<TwitterIcon />} />
+            <SidebarItem text="Youtube" icon={<YouTubeIcon />} />
+        </div>
+    </div>
+
+}
