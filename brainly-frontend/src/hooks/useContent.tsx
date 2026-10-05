@@ -1,33 +1,48 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+
 import { BACKEND_URL } from "../config";
 
-
-
 export function useContent() {
-    const [contents, setContents] = useState([]);
+    const [contents, setContents] = useState<any[]>([]);
 
-    function refresh() {
-        axios.get(`${BACKEND_URL}/api/v1/content`, {
-                headers: {
-                    "Authorization": localStorage.getItem("token")
+    async function refresh() {
+        try {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                return;
+            }
+
+            const response = await axios.get(
+                `${BACKEND_URL}/api/v1/content`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
-            })
-            .then((response) => {
-               setContents(response.data.content)
-            })
+            );
+
+            setContents(response.data.content);
+        } catch (error) {
+            console.error("Failed to fetch content:", error);
+        }
     }
 
     useEffect(() => {
-        refresh()
-        let interval = setInterval(() => {
-            refresh()
-        }, 10 * 1000)
+        refresh();
+
+        const interval = setInterval(() => {
+            refresh();
+        }, 10 * 1000);
 
         return () => {
             clearInterval(interval);
-        }
-    }, [])
+        };
+    }, []);
 
-    return {contents, refresh};
+    return {
+        contents,
+        refresh,
+    };
 }

@@ -1,27 +1,94 @@
+import mongoose, { model, Schema } from "mongoose";
+import { MONGO_URI } from "./config.js";
 
-import mongoose, {model, Schema} from "mongoose";
+mongoose
+    .connect(MONGO_URI)
+    .then(() => {
+        console.log("MongoDB connected");
+    })
+    .catch((error) => {
+        console.error("MongoDB connection failed:", error);
+    });
 
-mongoose.connect("mongodb://localhost:27017/brainly")
+const UserSchema = new Schema(
+    {
+        username: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true,
+            minlength: 3,
+            maxlength: 30,
+        },
 
-const UserSchema = new Schema({
-    username: {type: String, unique: true},
-    password: String
-})
+        password: {
+            type: String,
+            required: true,
+        },
+    },
+    {
+        timestamps: true,
+    }
+);
+
+const ContentSchema = new Schema(
+    {
+        title: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        link: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        tags: [
+            {
+                type: mongoose.Types.ObjectId,
+                ref: "Tag",
+            },
+        ],
+
+        type: {
+            type: String,
+            required: true,
+        },
+
+        userId: {
+            type: mongoose.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+    },
+    {
+        timestamps: true,
+    }
+);
+
+const LinkSchema = new Schema(
+    {
+        hash: {
+            type: String,
+            required: true,
+        },
+
+        userId: {
+            type: mongoose.Types.ObjectId,
+            ref: "User",
+            required: true,
+            unique: true,
+        },
+    },
+    {
+        timestamps: true,
+    }
+);
 
 export const UserModel = model("User", UserSchema);
 
-const ContentSchema = new Schema({
-    title: String,
-    link: String,
-    tags: [{type: mongoose.Types.ObjectId, ref: 'Tag'}],
-    type: String,
-    userId: {type: mongoose.Types.ObjectId, ref: 'User', required: true },
-})
-
-const LinkSchema = new Schema({
-    hash: String,
-    userId: {type: mongoose.Types.ObjectId, ref: 'User', required: true, unique: true },
-})
-
 export const LinkModel = model("Links", LinkSchema);
+
 export const ContentModel = model("Content", ContentSchema);
