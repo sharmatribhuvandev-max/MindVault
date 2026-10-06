@@ -170,6 +170,75 @@ app.get(
 
 /*
  * =========================
+ * UPDATE CONTENT
+ * =========================
+ */
+
+app.put(
+    "/api/v1/content/:id",
+    userMiddleware,
+    async (req, res) => {
+
+        const contentId = req.params.id;
+
+        if (
+            typeof contentId !== "string" ||
+            !mongoose.Types.ObjectId.isValid(contentId)
+        ) {
+            return res.status(400).json({
+                message: "Invalid content ID"
+            });
+        }
+
+        const { title, link, type, tags } = req.body;
+
+        if (
+            typeof title !== "string" ||
+            title.trim() === "" ||
+            typeof link !== "string" ||
+            link.trim() === "" ||
+            (type !== "youtube" && type !== "twitter")
+        ) {
+            return res.status(400).json({
+                message: "Invalid content data"
+            });
+        }
+
+        const userId = new mongoose.Types.ObjectId(
+            req.userId!
+        );
+
+        const content = await ContentModel.findOne({
+            _id: contentId,
+            userId
+        });
+
+        if (!content) {
+            return res.status(404).json({
+                message: "Content not found"
+            });
+        }
+
+        content.title = title.trim();
+        content.link = link.trim();
+        content.type = type;
+
+        if (Array.isArray(tags)) {
+            content.tags = tags;
+        }
+
+        await content.save();
+
+        return res.json({
+            message: "Content updated",
+            content
+        });
+    }
+);
+
+
+/*
+ * =========================
  * DELETE CONTENT
  * =========================
  */
