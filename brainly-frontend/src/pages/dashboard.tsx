@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+
 import "../App.css";
 
 import { Button } from "../components/Button";
@@ -7,12 +8,15 @@ import { CreateContentModal } from "../components/CreateContentModal";
 
 import { PlusIcon } from "../icons/PlusIcon";
 import { ShareIcon } from "../icons/ShareIcon";
+
 import { Sidebar } from "../components/Sidebar";
 
 import { useContent } from "../hooks/useContent";
 
 import axios from "axios";
+
 import { BACKEND_URL } from "../config";
+
 import { useNavigate } from "react-router-dom";
 
 type ContentType = "twitter" | "youtube";
@@ -34,12 +38,19 @@ interface Content {
 
 export default function Dashboard() {
     const [modalOpen, setModalOpen] = useState(false);
-    const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const [deletingId, setDeletingId] =
+        useState<string | null>(null);
+
     const [deleteError, setDeleteError] = useState("");
+
     const [editingContent, setEditingContent] =
         useState<Content | null>(null);
 
+    const [sharingEnabled, setSharingEnabled] = useState(false);
+
     const [searchQuery, setSearchQuery] = useState("");
+
     const [selectedType, setSelectedType] =
         useState<ContentFilter>("all");
 
@@ -77,6 +88,11 @@ export default function Dashboard() {
         try {
             const token = localStorage.getItem("token");
 
+            if (!token) {
+                navigate("/signin");
+                return;
+            }
+
             const response = await axios.post(
                 `${BACKEND_URL}/api/v1/brain/share`,
                 {
@@ -89,12 +105,86 @@ export default function Dashboard() {
                 }
             );
 
-            const shareUrl = `http://localhost:5173/share/${response.data.hash}`;
+            const shareUrl =
+                `${window.location.origin}/share/${response.data.hash}`;
 
-            alert(shareUrl);
-        } catch {
-            localStorage.removeItem("token");
-            navigate("/signin");
+            await navigator.clipboard.writeText(shareUrl);
+
+            setSharingEnabled(true);
+
+            alert("Share link copied to clipboard!");
+        } catch (error) {
+            console.error("Failed to create share link:", error);
+
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 401) {
+                    localStorage.removeItem("token");
+                    navigate("/signin");
+                    return;
+                }
+
+                alert(
+                    error.response?.data?.message ||
+                        "Failed to create share link. Please try again."
+                );
+
+                return;
+            }
+
+            alert(
+                "Failed to create share link. Please try again."
+            );
+        }
+    }
+
+    async function disableSharing() {
+        try {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                navigate("/signin");
+                return;
+            }
+
+            await axios.post(
+                `${BACKEND_URL}/api/v1/brain/share`,
+                {
+                    share: false,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            setSharingEnabled(false);
+
+            alert("Brain sharing disabled.");
+        } catch (error) {
+            console.error(
+                "Failed to disable sharing:",
+                error
+            );
+
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 401) {
+                    localStorage.removeItem("token");
+                    navigate("/signin");
+                    return;
+                }
+
+                alert(
+                    error.response?.data?.message ||
+                        "Failed to disable sharing. Please try again."
+                );
+
+                return;
+            }
+
+            alert(
+                "Failed to disable sharing. Please try again."
+            );
         }
     }
 
@@ -132,7 +222,10 @@ export default function Dashboard() {
 
             await refresh();
         } catch (error) {
-            console.error("Failed to delete content:", error);
+            console.error(
+                "Failed to delete content:",
+                error
+            );
 
             if (axios.isAxiosError(error)) {
                 if (error.response?.status === 401) {
@@ -143,7 +236,7 @@ export default function Dashboard() {
 
                 setDeleteError(
                     error.response?.data?.message ||
-                    "Failed to delete content. Please try again."
+                        "Failed to delete content. Please try again."
                 );
 
                 return;
@@ -243,12 +336,12 @@ export default function Dashboard() {
                         editContent={
                             editingContent
                                 ? {
-                                    id: editingContent._id,
-                                    title: editingContent.title,
-                                    link: editingContent.link,
-                                    type: editingContent.type,
-                                    tags: editingContent.tags,
-                                }
+                                      id: editingContent._id,
+                                      title: editingContent.title,
+                                      link: editingContent.link,
+                                      type: editingContent.type,
+                                      tags: editingContent.tags,
+                                  }
                                 : null
                         }
                         onUpdated={handleContentUpdated}
@@ -266,12 +359,21 @@ export default function Dashboard() {
                             startIcon={<PlusIcon />}
                         />
 
-                        <Button
-                            onClick={createShareLink}
-                            variant="secondary"
-                            text="Share Brain"
-                            startIcon={<ShareIcon />}
-                        />
+                        {sharingEnabled ? (
+                            <Button
+                                onClick={disableSharing}
+                                variant="secondary"
+                                text="Disable Sharing"
+                                startIcon={<ShareIcon />}
+                            />
+                        ) : (
+                            <Button
+                                onClick={createShareLink}
+                                variant="secondary"
+                                text="Share Brain"
+                                startIcon={<ShareIcon />}
+                            />
+                        )}
 
                         <Button
                             onClick={logout}
@@ -355,7 +457,9 @@ export default function Dashboard() {
                                         link={link}
                                         title={title}
                                         onDelete={deleteContent}
-                                        isDeleting={deletingId === _id}
+                                        isDeleting={
+                                            deletingId === _id
+                                        }
                                         onEdit={editContent}
                                     />
                                 )

@@ -9,6 +9,7 @@ interface CardProps {
     onDelete: (id: string) => Promise<void>;
     isDeleting: boolean;
     onEdit: (id: string) => void;
+    isPublic?: boolean;
 }
 
 function getYouTubeEmbedUrl(url: string) {
@@ -58,6 +59,7 @@ export function Card({
     onDelete,
     isDeleting,
     onEdit,
+    isPublic = false,
 }: CardProps) {
     const twitterContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -78,10 +80,8 @@ export function Card({
 
         const container = twitterContainerRef.current;
 
-        // Remove anything left from the previous Twitter widget.
         container.innerHTML = "";
 
-        // Create the blockquote outside React's DOM tree management.
         const blockquote = document.createElement("blockquote");
 
         blockquote.className = "twitter-tweet";
@@ -155,23 +155,29 @@ export function Card({
                             </a>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() => onEdit(id)}
-                            disabled={isDeleting}
-                            className="pr-2 text-sm text-blue-500 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        >
-                            Edit
-                        </button>
+                        {!isPublic && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => onEdit(id)}
+                                    disabled={isDeleting}
+                                    className="pr-2 text-sm text-blue-500 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    Edit
+                                </button>
 
-                        <button
-                            type="button"
-                            onClick={() => onDelete(id)}
-                            disabled={isDeleting}
-                            className="text-sm text-red-500 hover:text-red-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        >
-                            {isDeleting ? "Deleting..." : "Delete"}
-                        </button>
+                                <button
+                                    type="button"
+                                    onClick={() => onDelete(id)}
+                                    disabled={isDeleting}
+                                    className="text-sm text-red-500 hover:text-red-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    {isDeleting
+                                        ? "Deleting..."
+                                        : "Delete"}
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 

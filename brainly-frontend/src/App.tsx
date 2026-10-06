@@ -9,6 +9,7 @@ import Dashboard from "./pages/dashboard";
 import { Signin } from "./pages/Signin";
 import { Signup } from "./pages/Signup";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { SharedBrain } from "./pages/SharedBrain";
 
 function App() {
     return (
@@ -29,6 +30,13 @@ function App() {
                     element={<Signin />}
                 />
 
+                {/* Public shared Brain route */}
+                <Route
+                    path="/share/:hash"
+                    element={<SharedBrain />}
+                />
+
+                {/* Protected application routes */}
                 <Route element={<ProtectedRoute />}>
                     <Route
                         path="/dashboard"
