@@ -3,7 +3,13 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-import { ContentModel, LinkModel, UserModel } from "./db.js";
+import {
+    ContentModel,
+    LinkModel,
+    TagModel,
+    UserModel
+} from "./db.js";
+
 import {
     JWT_PASSWORD,
     JWT_EXPIRES_IN
@@ -46,8 +52,7 @@ app.post("/api/v1/signup", async (req, res) => {
             message: "User signed up"
         });
 
-    }
-    catch (e) {
+    } catch (e) {
 
         res.status(411).json({
             message: "User already exists"
@@ -108,6 +113,169 @@ app.post("/api/v1/signin", async (req, res) => {
 
 /*
  * =========================
+ * TAGS
+ * =========================
+ */
+
+
+/*
+ * CREATE TAG
+ */
+
+app.post(
+    "/api/v1/tags",
+    userMiddleware,
+    async (req, res) => {
+
+        const name = req.body.name;
+
+        if (
+            typeof name !== "string" ||
+            name.trim() === ""
+        ) {
+            return res.status(400).json({
+                message: "Tag name is required"
+            });
+        }
+
+        const normalizedName = name.trim().toLowerCase();
+
+        if (normalizedName.length > 30) {
+            return res.status(400).json({
+                message: "Tag name must be 30 characters or less"
+            });
+        }
+
+        const userId = new mongoose.Types.ObjectId(
+            req.userId!
+        );
+
+        try {
+
+            const existingTag = await TagModel.findOne({
+                userId,
+                name: normalizedName
+            });
+
+            if (existingTag) {
+                return res.status(409).json({
+                    message: "Tag already exists"
+                });
+            }
+
+            const tag = await TagModel.create({
+                name: normalizedName,
+                userId
+            });
+
+            return res.status(201).json({
+                message: "Tag created",
+                tag
+            });
+
+        } catch (error: any) {
+
+            if (error?.code === 11000) {
+                return res.status(409).json({
+                    message: "Tag already exists"
+                });
+            }
+
+            return res.status(500).json({
+                message: "Failed to create tag"
+            });
+        }
+    }
+);
+
+
+/*
+ * GET USER TAGS
+ */
+
+app.get(
+    "/api/v1/tags",
+    userMiddleware,
+    async (req, res) => {
+
+        const userId = new mongoose.Types.ObjectId(
+            req.userId!
+        );
+
+        const tags = await TagModel.find({
+            userId
+        }).sort({
+            name: 1
+        });
+
+        return res.json({
+            tags
+        });
+    }
+);
+
+
+/*
+ * DELETE TAG
+ */
+
+app.delete(
+    "/api/v1/tags/:id",
+    userMiddleware,
+    async (req, res) => {
+
+        const tagId = req.params.id;
+
+        if (
+            typeof tagId !== "string" ||
+            !mongoose.Types.ObjectId.isValid(tagId)
+        ) {
+            return res.status(400).json({
+                message: "Invalid tag ID"
+            });
+        }
+
+        const userId = new mongoose.Types.ObjectId(
+            req.userId!
+        );
+
+        const tag = await TagModel.findOne({
+            _id: tagId,
+            userId
+        });
+
+        if (!tag) {
+            return res.status(404).json({
+                message: "Tag not found"
+            });
+        }
+
+        await ContentModel.updateMany(
+            {
+                userId,
+                tags: tag._id
+            },
+            {
+                $pull: {
+                    tags: tag._id
+                }
+            }
+        );
+
+        await TagModel.deleteOne({
+            _id: tag._id,
+            userId
+        });
+
+        return res.json({
+            message: "Tag deleted"
+        });
+    }
+);
+
+
+/*
+ * =========================
  * ADD CONTENT
  * =========================
  */
@@ -119,17 +287,72 @@ app.post(
 
         const link = req.body.link;
         const type = req.body.type;
+        const title = req.body.title;
+        const tags = req.body.tags;
 
         const userId = new mongoose.Types.ObjectId(
             req.userId!
         );
 
+        /*
+         * Tags are optional.
+         * Existing content creation requests that do not
+         * send tags will continue to work.
+         */
+
+        let tagIds: mongoose.Types.ObjectId[] = [];
+
+        if (tags !== undefined) {
+
+            if (!Array.isArray(tags)) {
+                return res.status(400).json({
+                    message: "Tags must be an array"
+                });
+            }
+
+            const uniqueTagIds = [
+                ...new Set(
+                    tags.map((tagId: unknown) =>
+                        String(tagId)
+                    )
+                )
+            ];
+
+            for (const tagId of uniqueTagIds) {
+
+                if (
+                    !mongoose.Types.ObjectId.isValid(tagId)
+                ) {
+                    return res.status(400).json({
+                        message: "Invalid tag ID"
+                    });
+                }
+            }
+
+            const validTags = await TagModel.find({
+                _id: {
+                    $in: uniqueTagIds
+                },
+                userId
+            }).select("_id");
+
+            if (validTags.length !== uniqueTagIds.length) {
+                return res.status(403).json({
+                    message: "One or more tags do not belong to you"
+                });
+            }
+
+            tagIds = validTags.map(
+                (tag) => tag._id
+            );
+        }
+
         await ContentModel.create({
             link,
             type,
-            title: req.body.title,
+            title,
             userId,
-            tags: []
+            tags: tagIds
         });
 
         return res.json({
@@ -156,10 +379,15 @@ app.get(
 
         const content = await ContentModel.find({
             userId
-        }).populate(
-            "userId",
-            "username"
-        );
+        })
+            .populate(
+                "userId",
+                "username"
+            )
+            .populate(
+                "tags",
+                "name"
+            );
 
         res.json({
             content
@@ -190,7 +418,12 @@ app.put(
             });
         }
 
-        const { title, link, type, tags } = req.body;
+        const {
+            title,
+            link,
+            type,
+            tags
+        } = req.body;
 
         if (
             typeof title !== "string" ||
@@ -223,15 +456,76 @@ app.put(
         content.link = link.trim();
         content.type = type;
 
-        if (Array.isArray(tags)) {
-            content.tags = tags;
+        /*
+         * Only update tags when the request explicitly
+         * provides a tags array.
+         *
+         * This preserves existing behavior for requests
+         * that do not contain tags.
+         */
+
+        if (tags !== undefined) {
+
+            if (!Array.isArray(tags)) {
+                return res.status(400).json({
+                    message: "Tags must be an array"
+                });
+            }
+
+            const uniqueTagIds = [
+                ...new Set(
+                    tags.map((tagId: unknown) =>
+                        String(tagId)
+                    )
+                )
+            ];
+
+            for (const tagId of uniqueTagIds) {
+
+                if (
+                    !mongoose.Types.ObjectId.isValid(tagId)
+                ) {
+                    return res.status(400).json({
+                        message: "Invalid tag ID"
+                    });
+                }
+            }
+
+            const validTags = await TagModel.find({
+                _id: {
+                    $in: uniqueTagIds
+                },
+                userId
+            }).select("_id");
+
+            if (validTags.length !== uniqueTagIds.length) {
+                return res.status(403).json({
+                    message: "One or more tags do not belong to you"
+                });
+            }
+
+            content.tags = validTags.map(
+                (tag) => tag._id
+            );
         }
 
         await content.save();
 
+        const updatedContent = await ContentModel.findById(
+            content._id
+        )
+            .populate(
+                "userId",
+                "username"
+            )
+            .populate(
+                "tags",
+                "name"
+            );
+
         return res.json({
             message: "Content updated",
-            content
+            content: updatedContent
         });
     }
 );

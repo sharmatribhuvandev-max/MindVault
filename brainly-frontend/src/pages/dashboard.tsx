@@ -19,18 +19,25 @@ type ContentType = "twitter" | "youtube";
 
 type ContentFilter = "all" | ContentType;
 
+interface Tag {
+    _id: string;
+    name: string;
+}
+
 interface Content {
     _id: string;
     title: string;
     link: string;
     type: ContentType;
+    tags: Tag[];
 }
 
-export function Dashboard() {
+export default function Dashboard() {
     const [modalOpen, setModalOpen] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [deleteError, setDeleteError] = useState("");
-    const [editingContent, setEditingContent] = useState<Content | null>(null);
+    const [editingContent, setEditingContent] =
+        useState<Content | null>(null);
 
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedType, setSelectedType] =
@@ -164,6 +171,7 @@ export function Dashboard() {
             title: content.title,
             link: content.link,
             type: content.type,
+            tags: content.tags || [],
         });
 
         setModalOpen(true);
@@ -239,6 +247,7 @@ export function Dashboard() {
                                     title: editingContent.title,
                                     link: editingContent.link,
                                     type: editingContent.type,
+                                    tags: editingContent.tags,
                                 }
                                 : null
                         }
@@ -383,5 +392,3 @@ export function Dashboard() {
         </>
     );
 }
-
-export default Dashboard;

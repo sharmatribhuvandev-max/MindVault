@@ -31,6 +31,38 @@ const UserSchema = new Schema(
     }
 );
 
+const TagSchema = new Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+            lowercase: true,
+            minlength: 1,
+            maxlength: 30,
+        },
+
+        userId: {
+            type: mongoose.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+    },
+    {
+        timestamps: true,
+    }
+);
+
+TagSchema.index(
+    {
+        userId: 1,
+        name: 1,
+    },
+    {
+        unique: true,
+    }
+);
+
 const ContentSchema = new Schema(
     {
         title: {
@@ -88,6 +120,8 @@ const LinkSchema = new Schema(
 );
 
 export const UserModel = model("User", UserSchema);
+
+export const TagModel = model("Tag", TagSchema);
 
 export const LinkModel = model("Links", LinkSchema);
 
