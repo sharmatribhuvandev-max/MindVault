@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
+
 import { CrossIcon } from "../icons/CrossIcon";
+
 import { Button } from "./Button";
+
 import { Input } from "./Input";
+
 import { BACKEND_URL } from "../config";
+
 import axios from "axios";
 
 type ContentType = "youtube" | "twitter";
 
 interface Tag {
+    _id: string;
+    name: string;
+}
+
+interface Collection {
     _id: string;
     name: string;
 }
@@ -18,6 +28,7 @@ interface EditContent {
     link: string;
     type: ContentType;
     tags: Tag[];
+    collectionId: string | null;
 }
 
 interface CreateContentModalProps {
@@ -34,20 +45,51 @@ export function CreateContentModal({
     onUpdated,
 }: CreateContentModalProps) {
     const [title, setTitle] = useState("");
+
     const [link, setLink] = useState("");
-    const [type, setType] = useState<ContentType>("youtube");
+
+    const [type, setType] =
+        useState<ContentType>("youtube");
 
     const [tags, setTags] = useState<Tag[]>([]);
-    const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-    const [selectedTagId, setSelectedTagId] = useState("");
+
+    const [selectedTags, setSelectedTags] =
+        useState<Tag[]>([]);
+
+    const [selectedTagId, setSelectedTagId] =
+        useState("");
+
+    const [collections, setCollections] =
+        useState<Collection[]>([]);
+
+    const [selectedCollectionId, setSelectedCollectionId] =
+        useState("");
+
+    const [newCollectionName, setNewCollectionName] =
+        useState("");
+
+    const [showNewCollectionInput, setShowNewCollectionInput] =
+        useState(false);
+
+    const [collectionLoading, setCollectionLoading] =
+        useState(false);
 
     const [newTagName, setNewTagName] = useState("");
-    const [showNewTagInput, setShowNewTagInput] = useState(false);
+
+    const [showNewTagInput, setShowNewTagInput] =
+        useState(false);
 
     const [loading, setLoading] = useState(false);
-    const [tagLoading, setTagLoading] = useState(false);
+
+    const [tagLoading, setTagLoading] =
+        useState(false);
+
     const [error, setError] = useState("");
+
     const [tagError, setTagError] = useState("");
+
+    const [collectionError, setCollectionError] =
+        useState("");
 
     const isEditMode = editContent !== null;
 
@@ -58,22 +100,49 @@ export function CreateContentModal({
 
         if (editContent) {
             setTitle(editContent.title);
+
             setLink(editContent.link);
+
             setType(editContent.type);
+
             setSelectedTags(editContent.tags || []);
+
+            setSelectedCollectionId(
+                editContent.collectionId || ""
+            );
         } else {
             setTitle("");
+
             setLink("");
+
             setType("youtube");
+
             setSelectedTags([]);
+
+            setSelectedCollectionId("");
         }
 
         setSelectedTagId("");
+
         setNewTagName("");
+
         setShowNewTagInput(false);
+
+        setNewCollectionName("");
+
+        setShowNewCollectionInput(false);
+
         setError("");
+
         setTagError("");
+
+        setCollectionError("");
+
         setLoading(false);
+
+        setTagLoading(false);
+
+        setCollectionLoading(false);
     }, [open, editContent]);
 
     useEffect(() => {
@@ -82,6 +151,8 @@ export function CreateContentModal({
         }
 
         fetchTags();
+
+        fetchCollections();
     }, [open]);
 
     async function fetchTags() {
@@ -104,22 +175,168 @@ export function CreateContentModal({
 
             setTags(response.data.tags || []);
         } catch (error) {
-            console.error("Failed to fetch tags:", error);
+            console.error(
+                "Failed to fetch tags:",
+                error
+            );
 
             if (axios.isAxiosError(error)) {
-                if (error.response?.status === 401) {
+                if (
+                    error.response?.status === 401
+                ) {
                     setTagError(
                         "Your session has expired. Please sign in again."
                     );
                 } else {
                     setTagError(
                         error.response?.data?.message ||
-                        "Failed to load tags."
+                            "Failed to load tags."
                     );
                 }
             } else {
                 setTagError("Failed to load tags.");
             }
+        }
+    }
+
+    async function fetchCollections() {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            setCollectionError(
+                "You are not authenticated."
+            );
+            return;
+        }
+
+        try {
+            const response = await axios.get(
+                `${BACKEND_URL}/api/v1/collections`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            setCollections(
+                response.data.collections || []
+            );
+        } catch (error) {
+            console.error(
+                "Failed to fetch collections:",
+                error
+            );
+
+            if (axios.isAxiosError(error)) {
+                if (
+                    error.response?.status === 401
+                ) {
+                    setCollectionError(
+                        "Your session has expired. Please sign in again."
+                    );
+                } else {
+                    setCollectionError(
+                        error.response?.data?.message ||
+                            "Failed to load collections."
+                    );
+                }
+            } else {
+                setCollectionError(
+                    "Failed to load collections."
+                );
+            }
+        }
+    }
+
+    async function createNewCollection() {
+        const trimmedName =
+            newCollectionName.trim();
+
+        if (!trimmedName) {
+            setCollectionError(
+                "Collection name is required."
+            );
+            return;
+        }
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            setCollectionError(
+                "You are not authenticated."
+            );
+            return;
+        }
+
+        try {
+            setCollectionError("");
+
+            setCollectionLoading(true);
+
+            const response = await axios.post(
+                `${BACKEND_URL}/api/v1/collections`,
+                {
+                    name: trimmedName,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const newCollection: Collection =
+                response.data.collection;
+
+            setCollections((currentCollections) =>
+                [
+                    ...currentCollections,
+                    newCollection,
+                ].sort((a, b) =>
+                    a.name.localeCompare(b.name)
+                )
+            );
+
+            setSelectedCollectionId(
+                newCollection._id
+            );
+
+            setNewCollectionName("");
+
+            setShowNewCollectionInput(false);
+        } catch (error) {
+            console.error(
+                "Failed to create collection:",
+                error
+            );
+
+            if (axios.isAxiosError(error)) {
+                if (
+                    error.response?.status === 401
+                ) {
+                    setCollectionError(
+                        "Your session has expired. Please sign in again."
+                    );
+                } else if (
+                    error.response?.status === 409
+                ) {
+                    setCollectionError(
+                        "A collection with this name already exists."
+                    );
+                } else {
+                    setCollectionError(
+                        error.response?.data?.message ||
+                            "Failed to create collection."
+                    );
+                }
+            } else {
+                setCollectionError(
+                    "Failed to create collection."
+                );
+            }
+        } finally {
+            setCollectionLoading(false);
         }
     }
 
@@ -175,6 +392,7 @@ export function CreateContentModal({
 
         try {
             setTagError("");
+
             setTagLoading(true);
 
             const response = await axios.post(
@@ -189,14 +407,17 @@ export function CreateContentModal({
                 }
             );
 
-            const newTag: Tag = response.data.tag;
+            const newTag: Tag =
+                response.data.tag;
 
-            setTags((currentTags) => [
-                ...currentTags,
-                newTag,
-            ].sort((a, b) =>
-                a.name.localeCompare(b.name)
-            ));
+            setTags((currentTags) =>
+                [
+                    ...currentTags,
+                    newTag,
+                ].sort((a, b) =>
+                    a.name.localeCompare(b.name)
+                )
+            );
 
             setSelectedTags((currentTags) => [
                 ...currentTags,
@@ -204,23 +425,31 @@ export function CreateContentModal({
             ]);
 
             setNewTagName("");
+
             setShowNewTagInput(false);
         } catch (error) {
-            console.error("Failed to create tag:", error);
+            console.error(
+                "Failed to create tag:",
+                error
+            );
 
             if (axios.isAxiosError(error)) {
-                if (error.response?.status === 401) {
+                if (
+                    error.response?.status === 401
+                ) {
                     setTagError(
                         "Your session has expired. Please sign in again."
                     );
                 } else {
                     setTagError(
                         error.response?.data?.message ||
-                        "Failed to create tag."
+                            "Failed to create tag."
                     );
                 }
             } else {
-                setTagError("Failed to create tag.");
+                setTagError(
+                    "Failed to create tag."
+                );
             }
         } finally {
             setTagLoading(false);
@@ -229,7 +458,9 @@ export function CreateContentModal({
 
     async function submitContent() {
         if (!title.trim() || !link.trim()) {
-            setError("Title and link are required.");
+            setError(
+                "Title and link are required."
+            );
             return;
         }
 
@@ -242,11 +473,15 @@ export function CreateContentModal({
 
         try {
             setError("");
+
             setLoading(true);
 
             const tagIds = selectedTags.map(
                 (tag) => tag._id
             );
+
+            const collectionId =
+                selectedCollectionId || null;
 
             if (isEditMode) {
                 await axios.put(
@@ -256,6 +491,7 @@ export function CreateContentModal({
                         link: link.trim(),
                         type,
                         tags: tagIds,
+                        collectionId,
                     },
                     {
                         headers: {
@@ -275,6 +511,7 @@ export function CreateContentModal({
                         title: title.trim(),
                         type,
                         tags: tagIds,
+                        collectionId,
                     },
                     {
                         headers: {
@@ -286,17 +523,22 @@ export function CreateContentModal({
 
             onClose();
         } catch (error) {
-            console.error("Failed to save content:", error);
+            console.error(
+                "Failed to save content:",
+                error
+            );
 
             if (axios.isAxiosError(error)) {
-                if (error.response?.status === 401) {
+                if (
+                    error.response?.status === 401
+                ) {
                     setError(
                         "Your session has expired. Please sign in again."
                     );
                 } else {
                     setError(
                         error.response?.data?.message ||
-                        "Failed to save content. Please try again."
+                            "Failed to save content. Please try again."
                     );
                 }
             } else {
@@ -325,8 +567,7 @@ export function CreateContentModal({
                             flex
                             justify-center
                         "
-                    >
-                    </div>
+                    ></div>
 
                     <div
                         className="
@@ -341,7 +582,6 @@ export function CreateContentModal({
                     >
                         <div className="flex flex-col justify-center">
                             <span className="bg-white opacity-100 p-4 rounded fixed w-96 max-h-[90vh] overflow-y-auto">
-
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-lg font-semibold">
                                         {isEditMode
@@ -351,12 +591,18 @@ export function CreateContentModal({
 
                                     <div
                                         onClick={() => {
-                                            if (!loading && !tagLoading) {
+                                            if (
+                                                !loading &&
+                                                !tagLoading &&
+                                                !collectionLoading
+                                            ) {
                                                 onClose();
                                             }
                                         }}
                                         className={
-                                            loading || tagLoading
+                                            loading ||
+                                            tagLoading ||
+                                            collectionLoading
                                                 ? "text-gray-400"
                                                 : "cursor-pointer"
                                         }
@@ -369,7 +615,9 @@ export function CreateContentModal({
                                     <Input
                                         value={title}
                                         onChange={(e) => {
-                                            setTitle(e.target.value);
+                                            setTitle(
+                                                e.target.value
+                                            );
                                         }}
                                         placeholder="Title"
                                     />
@@ -377,7 +625,9 @@ export function CreateContentModal({
                                     <Input
                                         value={link}
                                         onChange={(e) => {
-                                            setLink(e.target.value);
+                                            setLink(
+                                                e.target.value
+                                            );
                                         }}
                                         placeholder="Link"
                                     />
@@ -387,32 +637,187 @@ export function CreateContentModal({
                                     <h1>Type</h1>
 
                                     <div className="flex gap-1 justify-center pb-2">
-
                                         <Button
                                             text="Youtube"
                                             variant={
-                                                type === "youtube"
+                                                type ===
+                                                "youtube"
                                                     ? "primary"
                                                     : "secondary"
                                             }
                                             onClick={() => {
-                                                setType("youtube");
+                                                setType(
+                                                    "youtube"
+                                                );
                                             }}
                                         />
 
                                         <Button
                                             text="Twitter"
                                             variant={
-                                                type === "twitter"
+                                                type ===
+                                                "twitter"
                                                     ? "primary"
                                                     : "secondary"
                                             }
                                             onClick={() => {
-                                                setType("twitter");
+                                                setType(
+                                                    "twitter"
+                                                );
                                             }}
                                         />
-
                                     </div>
+                                </div>
+
+                                <div className="mt-3">
+                                    <h1 className="font-medium">
+                                        Collection
+                                    </h1>
+
+                                    <select
+                                        value={
+                                            selectedCollectionId
+                                        }
+                                        onChange={(event) =>
+                                            setSelectedCollectionId(
+                                                event.target.value
+                                            )
+                                        }
+                                        disabled={
+                                            loading ||
+                                            tagLoading ||
+                                            collectionLoading
+                                        }
+                                        className="
+                                            w-full
+                                            border
+                                            border-gray-300
+                                            rounded-md
+                                            px-3
+                                            py-2
+                                            bg-white
+                                            mt-2
+                                        "
+                                    >
+                                        <option value="">
+                                            No collection
+                                        </option>
+
+                                        {collections.map(
+                                            (collection) => (
+                                                <option
+                                                    key={
+                                                        collection._id
+                                                    }
+                                                    value={
+                                                        collection._id
+                                                    }
+                                                >
+                                                    {
+                                                        collection.name
+                                                    }
+                                                </option>
+                                            )
+                                        )}
+                                    </select>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowNewCollectionInput(
+                                                (current) =>
+                                                    !current
+                                            )
+                                        }
+                                        disabled={
+                                            loading ||
+                                            tagLoading ||
+                                            collectionLoading
+                                        }
+                                        className="
+                                            mt-2
+                                            text-sm
+                                            text-blue-500
+                                            hover:text-blue-700
+                                            disabled:text-gray-400
+                                        "
+                                    >
+                                        {showNewCollectionInput
+                                            ? "Cancel"
+                                            : "+ Create new collection"}
+                                    </button>
+
+                                    {showNewCollectionInput && (
+                                        <div className="mt-2">
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={
+                                                        newCollectionName
+                                                    }
+                                                    onChange={(
+                                                        event
+                                                    ) =>
+                                                        setNewCollectionName(
+                                                            event
+                                                                .target
+                                                                .value
+                                                        )
+                                                    }
+                                                    placeholder="New collection name"
+                                                    maxLength={
+                                                        50
+                                                    }
+                                                    disabled={
+                                                        collectionLoading ||
+                                                        loading
+                                                    }
+                                                    className="
+                                                        flex-1
+                                                        border
+                                                        border-gray-300
+                                                        rounded-md
+                                                        px-3
+                                                        py-2
+                                                        outline-none
+                                                        focus:border-gray-500
+                                                    "
+                                                />
+
+                                                <button
+                                                    type="button"
+                                                    onClick={
+                                                        createNewCollection
+                                                    }
+                                                    disabled={
+                                                        !newCollectionName.trim() ||
+                                                        collectionLoading ||
+                                                        loading
+                                                    }
+                                                    className="
+                                                        px-3
+                                                        py-2
+                                                        rounded-md
+                                                        bg-black
+                                                        text-white
+                                                        disabled:bg-gray-300
+                                                    "
+                                                >
+                                                    {collectionLoading
+                                                        ? "Creating..."
+                                                        : "Create"}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {collectionError && (
+                                        <div className="text-red-500 text-sm mt-2">
+                                            {
+                                                collectionError
+                                            }
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="mt-3">
@@ -421,50 +826,84 @@ export function CreateContentModal({
                                     </h1>
 
                                     <div className="flex flex-wrap gap-2 mt-2">
-                                        {selectedTags.length === 0 ? (
+                                        {selectedTags.length ===
+                                        0 ? (
                                             <p className="text-sm text-gray-500">
                                                 No tags selected.
                                             </p>
                                         ) : (
-                                            selectedTags.map((tag) => (
-                                                <div
-                                                    key={tag._id}
-                                                    className="flex items-center gap-1 bg-gray-200 rounded-full px-3 py-1 text-sm"
-                                                >
-                                                    <span>
-                                                        #{tag.name}
-                                                    </span>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            removeSelectedTag(
-                                                                tag._id
-                                                            )
+                                            selectedTags.map(
+                                                (tag) => (
+                                                    <div
+                                                        key={
+                                                            tag._id
                                                         }
-                                                        disabled={loading}
-                                                        className="text-gray-500 hover:text-red-500 disabled:text-gray-400"
+                                                        className="
+                                                            flex
+                                                            items-center
+                                                            gap-1
+                                                            bg-gray-200
+                                                            rounded-full
+                                                            px-3
+                                                            py-1
+                                                            text-sm
+                                                        "
                                                     >
-                                                        ×
-                                                    </button>
-                                                </div>
-                                            ))
+                                                        <span>
+                                                            #
+                                                            {
+                                                                tag.name
+                                                            }
+                                                        </span>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                removeSelectedTag(
+                                                                    tag._id
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                loading
+                                                            }
+                                                            className="
+                                                                text-gray-500
+                                                                hover:text-red-500
+                                                                disabled:text-gray-400
+                                                            "
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                )
+                                            )
                                         )}
                                     </div>
 
                                     <div className="flex gap-2 mt-3">
                                         <select
-                                            value={selectedTagId}
+                                            value={
+                                                selectedTagId
+                                            }
                                             onChange={(event) =>
                                                 setSelectedTagId(
-                                                    event.target.value
+                                                    event.target
+                                                        .value
                                                 )
                                             }
                                             disabled={
                                                 loading ||
                                                 tagLoading
                                             }
-                                            className="flex-1 border border-gray-300 rounded-md px-3 py-2 bg-white"
+                                            className="
+                                                flex-1
+                                                border
+                                                border-gray-300
+                                                rounded-md
+                                                px-3
+                                                py-2
+                                                bg-white
+                                            "
                                         >
                                             <option value="">
                                                 Select a tag
@@ -474,30 +913,50 @@ export function CreateContentModal({
                                                 .filter(
                                                     (tag) =>
                                                         !selectedTags.some(
-                                                            (selectedTag) =>
+                                                            (
+                                                                selectedTag
+                                                            ) =>
                                                                 selectedTag._id ===
                                                                 tag._id
                                                         )
                                                 )
-                                                .map((tag) => (
-                                                    <option
-                                                        key={tag._id}
-                                                        value={tag._id}
-                                                    >
-                                                        {tag.name}
-                                                    </option>
-                                                ))}
+                                                .map(
+                                                    (tag) => (
+                                                        <option
+                                                            key={
+                                                                tag._id
+                                                            }
+                                                            value={
+                                                                tag._id
+                                                            }
+                                                        >
+                                                            {
+                                                                tag.name
+                                                            }
+                                                        </option>
+                                                    )
+                                                )}
                                         </select>
 
                                         <button
                                             type="button"
-                                            onClick={addSelectedTag}
+                                            onClick={
+                                                addSelectedTag
+                                            }
                                             disabled={
                                                 !selectedTagId ||
                                                 loading ||
                                                 tagLoading
                                             }
-                                            className="px-3 py-2 rounded-md border bg-white hover:bg-gray-50 disabled:text-gray-400"
+                                            className="
+                                                px-3
+                                                py-2
+                                                rounded-md
+                                                border
+                                                bg-white
+                                                hover:bg-gray-50
+                                                disabled:text-gray-400
+                                            "
                                         >
                                             Add
                                         </button>
@@ -507,14 +966,21 @@ export function CreateContentModal({
                                         type="button"
                                         onClick={() =>
                                             setShowNewTagInput(
-                                                (current) => !current
+                                                (current) =>
+                                                    !current
                                             )
                                         }
                                         disabled={
                                             loading ||
                                             tagLoading
                                         }
-                                        className="mt-2 text-sm text-blue-500 hover:text-blue-700 disabled:text-gray-400"
+                                        className="
+                                            mt-2
+                                            text-sm
+                                            text-blue-500
+                                            hover:text-blue-700
+                                            disabled:text-gray-400
+                                        "
                                     >
                                         {showNewTagInput
                                             ? "Cancel"
@@ -526,10 +992,16 @@ export function CreateContentModal({
                                             <div className="flex gap-2">
                                                 <input
                                                     type="text"
-                                                    value={newTagName}
-                                                    onChange={(event) =>
+                                                    value={
+                                                        newTagName
+                                                    }
+                                                    onChange={(
+                                                        event
+                                                    ) =>
                                                         setNewTagName(
-                                                            event.target.value
+                                                            event
+                                                                .target
+                                                                .value
                                                         )
                                                     }
                                                     placeholder="New tag name"
@@ -537,7 +1009,16 @@ export function CreateContentModal({
                                                         tagLoading ||
                                                         loading
                                                     }
-                                                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-gray-500"
+                                                    className="
+                                                        flex-1
+                                                        border
+                                                        border-gray-300
+                                                        rounded-md
+                                                        px-3
+                                                        py-2
+                                                        outline-none
+                                                        focus:border-gray-500
+                                                    "
                                                 />
 
                                                 <button
@@ -550,7 +1031,14 @@ export function CreateContentModal({
                                                         tagLoading ||
                                                         loading
                                                     }
-                                                    className="px-3 py-2 rounded-md bg-black text-white disabled:bg-gray-300"
+                                                    className="
+                                                        px-3
+                                                        py-2
+                                                        rounded-md
+                                                        bg-black
+                                                        text-white
+                                                        disabled:bg-gray-300
+                                                    "
                                                 >
                                                     {tagLoading
                                                         ? "Adding..."
@@ -575,7 +1063,9 @@ export function CreateContentModal({
 
                                 <div className="flex justify-center mt-3">
                                     <Button
-                                        onClick={submitContent}
+                                        onClick={
+                                            submitContent
+                                        }
                                         variant="primary"
                                         text={
                                             loading
@@ -588,7 +1078,6 @@ export function CreateContentModal({
                                         }
                                     />
                                 </div>
-
                             </span>
                         </div>
                     </div>

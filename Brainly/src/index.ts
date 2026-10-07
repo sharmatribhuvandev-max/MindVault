@@ -1,9 +1,13 @@
 import express from "express";
+
 import mongoose from "mongoose";
+
 import jwt from "jsonwebtoken";
+
 import bcrypt from "bcryptjs";
 
 import {
+    CollectionModel,
     ContentModel,
     LinkModel,
     TagModel,
@@ -16,14 +20,16 @@ import {
 } from "./config.js";
 
 import { userMiddleware } from "./middleware.js";
+
 import { random } from "./utils.js";
+
 import cors from "cors";
 
 const app = express();
 
 app.use(express.json());
-app.use(cors());
 
+app.use(cors());
 
 /*
  * =========================
@@ -34,6 +40,7 @@ app.use(cors());
 app.post("/api/v1/signup", async (req, res) => {
 
     const username = req.body.username;
+
     const password = req.body.password;
 
     try {
@@ -57,9 +64,10 @@ app.post("/api/v1/signup", async (req, res) => {
         res.status(411).json({
             message: "User already exists"
         });
-    }
-});
 
+    }
+
+});
 
 /*
  * =========================
@@ -70,6 +78,7 @@ app.post("/api/v1/signup", async (req, res) => {
 app.post("/api/v1/signin", async (req, res) => {
 
     const username = req.body.username;
+
     const password = req.body.password;
 
     const existingUser = await UserModel.findOne({
@@ -81,6 +90,7 @@ app.post("/api/v1/signin", async (req, res) => {
         return res.status(403).json({
             message: "Incorrect credentials"
         });
+
     }
 
     const passwordMatches = await bcrypt.compare(
@@ -93,6 +103,7 @@ app.post("/api/v1/signin", async (req, res) => {
         return res.status(403).json({
             message: "Incorrect credentials"
         });
+
     }
 
     const token = jwt.sign(
@@ -108,15 +119,14 @@ app.post("/api/v1/signin", async (req, res) => {
     res.json({
         token
     });
-});
 
+});
 
 /*
  * =========================
  * TAGS
  * =========================
  */
-
 
 /*
  * CREATE TAG
@@ -133,17 +143,22 @@ app.post(
             typeof name !== "string" ||
             name.trim() === ""
         ) {
+
             return res.status(400).json({
                 message: "Tag name is required"
             });
+
         }
 
         const normalizedName = name.trim().toLowerCase();
 
         if (normalizedName.length > 30) {
+
             return res.status(400).json({
-                message: "Tag name must be 30 characters or less"
+                message:
+                    "Tag name must be 30 characters or less"
             });
+
         }
 
         const userId = new mongoose.Types.ObjectId(
@@ -158,9 +173,11 @@ app.post(
             });
 
             if (existingTag) {
+
                 return res.status(409).json({
                     message: "Tag already exists"
                 });
+
             }
 
             const tag = await TagModel.create({
@@ -176,18 +193,22 @@ app.post(
         } catch (error: any) {
 
             if (error?.code === 11000) {
+
                 return res.status(409).json({
                     message: "Tag already exists"
                 });
+
             }
 
             return res.status(500).json({
                 message: "Failed to create tag"
             });
-        }
-    }
-);
 
+        }
+
+    }
+
+);
 
 /*
  * GET USER TAGS
@@ -211,9 +232,10 @@ app.get(
         return res.json({
             tags
         });
-    }
-);
 
+    }
+
+);
 
 /*
  * DELETE TAG
@@ -230,9 +252,11 @@ app.delete(
             typeof tagId !== "string" ||
             !mongoose.Types.ObjectId.isValid(tagId)
         ) {
+
             return res.status(400).json({
                 message: "Invalid tag ID"
             });
+
         }
 
         const userId = new mongoose.Types.ObjectId(
@@ -245,9 +269,11 @@ app.delete(
         });
 
         if (!tag) {
+
             return res.status(404).json({
                 message: "Tag not found"
             });
+
         }
 
         await ContentModel.updateMany(
@@ -270,9 +296,10 @@ app.delete(
         return res.json({
             message: "Tag deleted"
         });
-    }
-);
 
+    }
+
+);
 
 /*
  * =========================
@@ -286,18 +313,23 @@ app.post(
     async (req, res) => {
 
         const link = req.body.link;
+
         const type = req.body.type;
+
         const title = req.body.title;
+
         const tags = req.body.tags;
+
+        const collectionId = req.body.collectionId;
 
         const userId = new mongoose.Types.ObjectId(
             req.userId!
         );
 
         /*
-         * Tags are optional.
-         * Existing content creation requests that do not
-         * send tags will continue to work.
+         * =========================
+         * TAG VALIDATION
+         * =========================
          */
 
         let tagIds: mongoose.Types.ObjectId[] = [];
@@ -305,9 +337,11 @@ app.post(
         if (tags !== undefined) {
 
             if (!Array.isArray(tags)) {
+
                 return res.status(400).json({
                     message: "Tags must be an array"
                 });
+
             }
 
             const uniqueTagIds = [
@@ -323,10 +357,13 @@ app.post(
                 if (
                     !mongoose.Types.ObjectId.isValid(tagId)
                 ) {
+
                     return res.status(400).json({
                         message: "Invalid tag ID"
                     });
+
                 }
+
             }
 
             const validTags = await TagModel.find({
@@ -336,31 +373,95 @@ app.post(
                 userId
             }).select("_id");
 
-            if (validTags.length !== uniqueTagIds.length) {
+            if (
+                validTags.length !==
+                uniqueTagIds.length
+            ) {
+
                 return res.status(403).json({
-                    message: "One or more tags do not belong to you"
+                    message:
+                        "One or more tags do not belong to you"
                 });
+
             }
 
             tagIds = validTags.map(
                 (tag) => tag._id
             );
+
         }
+
+        /*
+         * =========================
+         * COLLECTION VALIDATION
+         * =========================
+         */
+
+        let validCollectionId:
+            mongoose.Types.ObjectId | null = null;
+
+        if (
+            collectionId !== undefined &&
+            collectionId !== null &&
+            collectionId !== ""
+        ) {
+
+            if (
+                typeof collectionId !== "string" ||
+                !mongoose.Types.ObjectId.isValid(
+                    collectionId
+                )
+            ) {
+
+                return res.status(400).json({
+                    message: "Invalid collection ID"
+                });
+
+            }
+
+            const collection =
+                await CollectionModel.findOne({
+                    _id: collectionId,
+                    userId
+                });
+
+            if (!collection) {
+
+                return res.status(403).json({
+                    message:
+                        "Collection does not belong to you"
+                });
+
+            }
+
+            validCollectionId =
+                new mongoose.Types.ObjectId(
+                    collectionId
+                );
+        }
+
+        /*
+         * =========================
+         * CREATE CONTENT
+         * =========================
+         */
 
         await ContentModel.create({
             link,
             type,
             title,
             userId,
-            tags: tagIds
+            tags: tagIds,
+            collectionId: validCollectionId
         });
 
         return res.json({
             message: "Content added"
         });
-    }
-);
 
+    }
+
+);
 
 /*
  * =========================
@@ -387,14 +488,19 @@ app.get(
             .populate(
                 "tags",
                 "name"
+            )
+            .populate(
+                "collectionId",
+                "name"
             );
 
         res.json({
             content
         });
-    }
-);
 
+    }
+
+);
 
 /*
  * =========================
@@ -413,16 +519,19 @@ app.put(
             typeof contentId !== "string" ||
             !mongoose.Types.ObjectId.isValid(contentId)
         ) {
+
             return res.status(400).json({
                 message: "Invalid content ID"
             });
+
         }
 
         const {
             title,
             link,
             type,
-            tags
+            tags,
+            collectionId
         } = req.body;
 
         if (
@@ -430,11 +539,14 @@ app.put(
             title.trim() === "" ||
             typeof link !== "string" ||
             link.trim() === "" ||
-            (type !== "youtube" && type !== "twitter")
+            (type !== "youtube" &&
+                type !== "twitter")
         ) {
+
             return res.status(400).json({
                 message: "Invalid content data"
             });
+
         }
 
         const userId = new mongoose.Types.ObjectId(
@@ -447,29 +559,33 @@ app.put(
         });
 
         if (!content) {
+
             return res.status(404).json({
                 message: "Content not found"
             });
+
         }
 
         content.title = title.trim();
+
         content.link = link.trim();
+
         content.type = type;
 
         /*
-         * Only update tags when the request explicitly
-         * provides a tags array.
-         *
-         * This preserves existing behavior for requests
-         * that do not contain tags.
+         * =========================
+         * UPDATE TAGS
+         * =========================
          */
 
         if (tags !== undefined) {
 
             if (!Array.isArray(tags)) {
+
                 return res.status(400).json({
                     message: "Tags must be an array"
                 });
+
             }
 
             const uniqueTagIds = [
@@ -485,10 +601,13 @@ app.put(
                 if (
                     !mongoose.Types.ObjectId.isValid(tagId)
                 ) {
+
                     return res.status(400).json({
                         message: "Invalid tag ID"
                     });
+
                 }
+
             }
 
             const validTags = await TagModel.find({
@@ -498,38 +617,462 @@ app.put(
                 userId
             }).select("_id");
 
-            if (validTags.length !== uniqueTagIds.length) {
+            if (
+                validTags.length !==
+                uniqueTagIds.length
+            ) {
+
                 return res.status(403).json({
-                    message: "One or more tags do not belong to you"
+                    message:
+                        "One or more tags do not belong to you"
                 });
+
             }
 
             content.tags = validTags.map(
                 (tag) => tag._id
             );
+
+        }
+
+        /*
+         * =========================
+         * UPDATE COLLECTION
+         * =========================
+         */
+
+        if (collectionId !== undefined) {
+
+            if (
+                collectionId === null ||
+                collectionId === ""
+            ) {
+
+                content.collectionId = null;
+
+            } else {
+
+                if (
+                    typeof collectionId !== "string" ||
+                    !mongoose.Types.ObjectId.isValid(
+                        collectionId
+                    )
+                ) {
+
+                    return res.status(400).json({
+                        message:
+                            "Invalid collection ID"
+                    });
+
+                }
+
+                const collection =
+                    await CollectionModel.findOne({
+                        _id: collectionId,
+                        userId
+                    });
+
+                if (!collection) {
+
+                    return res.status(403).json({
+                        message:
+                            "Collection does not belong to you"
+                    });
+
+                }
+
+                content.collectionId =
+                    new mongoose.Types.ObjectId(
+                        collectionId
+                    );
+
+            }
+
         }
 
         await content.save();
 
-        const updatedContent = await ContentModel.findById(
-            content._id
-        )
-            .populate(
-                "userId",
-                "username"
+        const updatedContent =
+            await ContentModel.findById(
+                content._id
             )
-            .populate(
-                "tags",
-                "name"
-            );
+                .populate(
+                    "userId",
+                    "username"
+                )
+                .populate(
+                    "tags",
+                    "name"
+                )
+                .populate(
+                    "collectionId",
+                    "name"
+                );
 
         return res.json({
             message: "Content updated",
             content: updatedContent
         });
+
     }
+
 );
 
+/*
+ * =========================
+ * FAVORITE CONTENT
+ * =========================
+ */
+
+app.patch(
+    "/api/v1/content/:id/favorite",
+    userMiddleware,
+    async (req, res) => {
+
+        const contentId = req.params.id;
+
+        if (
+            typeof contentId !== "string" ||
+            !mongoose.Types.ObjectId.isValid(contentId)
+        ) {
+
+            return res.status(400).json({
+                message: "Invalid content ID"
+            });
+
+        }
+
+        const { isFavorite } = req.body;
+
+        if (typeof isFavorite !== "boolean") {
+
+            return res.status(400).json({
+                message:
+                    "isFavorite must be a boolean"
+            });
+
+        }
+
+        const userId = new mongoose.Types.ObjectId(
+            req.userId!
+        );
+
+        const content = await ContentModel.findOne({
+            _id: contentId,
+            userId
+        });
+
+        if (!content) {
+
+            return res.status(404).json({
+                message: "Content not found"
+            });
+
+        }
+
+        content.isFavorite = isFavorite;
+
+        await content.save();
+
+        const updatedContent =
+            await ContentModel.findById(
+                content._id
+            )
+                .populate(
+                    "userId",
+                    "username"
+                )
+                .populate(
+                    "tags",
+                    "name"
+                )
+                .populate(
+                    "collectionId",
+                    "name"
+                );
+
+        return res.json({
+            message: isFavorite
+                ? "Content added to favorites"
+                : "Content removed from favorites",
+            content: updatedContent
+        });
+
+    }
+
+);
+
+/*
+ * =========================
+ * PIN CONTENT
+ * =========================
+ */
+
+app.patch(
+    "/api/v1/content/:id/pin",
+    userMiddleware,
+    async (req, res) => {
+
+        const contentId = req.params.id;
+
+        if (
+            typeof contentId !== "string" ||
+            !mongoose.Types.ObjectId.isValid(contentId)
+        ) {
+
+            return res.status(400).json({
+                message: "Invalid content ID"
+            });
+
+        }
+
+        const { isPinned } = req.body;
+
+        if (typeof isPinned !== "boolean") {
+
+            return res.status(400).json({
+                message:
+                    "isPinned must be a boolean"
+            });
+
+        }
+
+        const userId = new mongoose.Types.ObjectId(
+            req.userId!
+        );
+
+        const content = await ContentModel.findOne({
+            _id: contentId,
+            userId
+        });
+
+        if (!content) {
+
+            return res.status(404).json({
+                message: "Content not found"
+            });
+
+        }
+
+        content.isPinned = isPinned;
+
+        await content.save();
+
+        const updatedContent =
+            await ContentModel.findById(
+                content._id
+            )
+                .populate(
+                    "userId",
+                    "username"
+                )
+                .populate(
+                    "tags",
+                    "name"
+                )
+                .populate(
+                    "collectionId",
+                    "name"
+                );
+
+        return res.json({
+            message: isPinned
+                ? "Content pinned"
+                : "Content unpinned",
+            content: updatedContent
+        });
+
+    }
+
+);
+
+/*
+ * =========================
+ * COLLECTIONS
+ * =========================
+ */
+
+/*
+ * CREATE COLLECTION
+ */
+
+app.post(
+    "/api/v1/collections",
+    userMiddleware,
+    async (req, res) => {
+
+        const { name } = req.body;
+
+        if (
+            typeof name !== "string" ||
+            name.trim() === ""
+        ) {
+
+            return res.status(400).json({
+                message:
+                    "Collection name is required"
+            });
+
+        }
+
+        const trimmedName = name.trim();
+
+        if (trimmedName.length > 50) {
+
+            return res.status(400).json({
+                message:
+                    "Collection name cannot exceed 50 characters"
+            });
+
+        }
+
+        const userId = new mongoose.Types.ObjectId(
+            req.userId!
+        );
+
+        try {
+
+            const collection =
+                await CollectionModel.create({
+                    name: trimmedName,
+                    userId
+                });
+
+            return res.status(201).json({
+                message:
+                    "Collection created successfully",
+                collection
+            });
+
+        } catch (error: any) {
+
+            if (error?.code === 11000) {
+
+                return res.status(409).json({
+                    message:
+                        "A collection with this name already exists"
+                });
+
+            }
+
+            console.error(
+                "Create collection error:",
+                error
+            );
+
+            return res.status(500).json({
+                message:
+                    "Failed to create collection"
+            });
+
+        }
+
+    }
+
+);
+
+/*
+ * GET COLLECTIONS
+ */
+
+app.get(
+    "/api/v1/collections",
+    userMiddleware,
+    async (req, res) => {
+
+        const userId = new mongoose.Types.ObjectId(
+            req.userId!
+        );
+
+        const collections =
+            await CollectionModel.find({
+                userId
+            }).sort({
+                createdAt: -1
+            });
+
+        return res.json({
+            collections
+        });
+
+    }
+
+);
+
+/*
+ * DELETE COLLECTION
+ */
+
+app.delete(
+    "/api/v1/collections/:id",
+    userMiddleware,
+    async (req, res) => {
+
+        const collectionId = req.params.id;
+
+        if (
+            typeof collectionId !== "string" ||
+            !mongoose.Types.ObjectId.isValid(
+                collectionId
+            )
+        ) {
+
+            return res.status(400).json({
+                message:
+                    "Invalid collection ID"
+            });
+
+        }
+
+        const userId = new mongoose.Types.ObjectId(
+            req.userId!
+        );
+
+        const collection =
+            await CollectionModel.findOne({
+                _id: collectionId,
+                userId
+            });
+
+        if (!collection) {
+
+            return res.status(404).json({
+                message:
+                    "Collection not found"
+            });
+
+        }
+
+        /*
+         * Remove the collection from any content
+         * that belongs to the current user.
+         */
+        await ContentModel.updateMany(
+            {
+                userId,
+                collectionId:
+                    collection._id
+            },
+            {
+                $set: {
+                    collectionId: null
+                }
+            }
+        );
+
+        await CollectionModel.deleteOne({
+            _id: collectionId,
+            userId
+        });
+
+        return res.json({
+            message:
+                "Collection deleted successfully"
+        });
+
+    }
+
+);
 
 /*
  * =========================
@@ -556,9 +1099,10 @@ app.delete(
         res.json({
             message: "Deleted"
         });
-    }
-);
 
+    }
+
+);
 
 /*
  * =========================
@@ -579,9 +1123,10 @@ app.post(
 
         if (share) {
 
-            const existingLink = await LinkModel.findOne({
-                userId
-            });
+            const existingLink =
+                await LinkModel.findOne({
+                    userId
+                });
 
             if (existingLink) {
 
@@ -590,6 +1135,7 @@ app.post(
                 });
 
                 return;
+
             }
 
             const hash = random(10);
@@ -612,10 +1158,12 @@ app.post(
             res.json({
                 message: "Removed Link"
             });
-        }
-    }
-);
 
+        }
+
+    }
+
+);
 
 /*
  * =========================
@@ -634,34 +1182,42 @@ app.get(
         });
 
         if (!link) {
+
             return res.status(411).json({
-                message: "Sorry incorrect input"
+                message:
+                    "Sorry incorrect input"
             });
+
         }
 
-        const content = await ContentModel.find({
-            userId: link.userId
-        });
+        const content =
+            await ContentModel.find({
+                userId: link.userId
+            });
 
         console.log(link);
 
-        const user = await UserModel.findOne({
-            _id: link.userId
-        });
+        const user =
+            await UserModel.findOne({
+                _id: link.userId
+            });
 
         if (!user) {
+
             return res.status(411).json({
                 message: "User not found"
             });
+
         }
 
         res.json({
             username: user.username,
-            content: content
+            content
         });
-    }
-);
 
+    }
+
+);
 
 /*
  * =========================
@@ -670,5 +1226,9 @@ app.get(
  */
 
 app.listen(3000, () => {
-    console.log("Server running on port 3000");
+
+    console.log(
+        "Server running on port 3000"
+    );
+
 });

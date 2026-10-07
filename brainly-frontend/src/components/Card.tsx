@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+
 import { ShareIcon } from "../icons/ShareIcon";
 
 interface CardProps {
@@ -6,16 +7,37 @@ interface CardProps {
     title: string;
     link: string;
     type: "twitter" | "youtube";
+
+    isFavorite?: boolean;
+    isPinned?: boolean;
+
+    onFavorite?: (
+        id: string,
+        isFavorite: boolean
+    ) => Promise<void>;
+
+    onPin?: (
+        id: string,
+        isPinned: boolean
+    ) => Promise<void>;
+
     onDelete: (id: string) => Promise<void>;
+
     isDeleting: boolean;
+    isFavoriting?: boolean;
+    isPinning?: boolean;
+
     onEdit: (id: string) => void;
+
     isPublic?: boolean;
 }
 
 function getYouTubeEmbedUrl(url: string) {
     try {
         const parsedUrl = new URL(url);
-        const videoId = parsedUrl.searchParams.get("v");
+
+        const videoId =
+            parsedUrl.searchParams.get("v");
 
         if (!videoId) {
             return null;
@@ -33,15 +55,21 @@ function getTwitterUrlType(url: string) {
 
         const isTwitter =
             parsedUrl.hostname === "twitter.com" ||
-            parsedUrl.hostname === "www.twitter.com" ||
+            parsedUrl.hostname ===
+                "www.twitter.com" ||
             parsedUrl.hostname === "x.com" ||
-            parsedUrl.hostname === "www.x.com";
+            parsedUrl.hostname ===
+                "www.x.com";
 
         if (!isTwitter) {
             return "invalid";
         }
 
-        if (parsedUrl.pathname.includes("/status/")) {
+        if (
+            parsedUrl.pathname.includes(
+                "/status/"
+            )
+        ) {
             return "post";
         }
 
@@ -56,18 +84,31 @@ export function Card({
     title,
     link,
     type,
+    isFavorite = false,
+    isPinned = false,
+    onFavorite,
+    onPin,
     onDelete,
     isDeleting,
+    isFavoriting = false,
+    isPinning = false,
     onEdit,
     isPublic = false,
 }: CardProps) {
-    const twitterContainerRef = useRef<HTMLDivElement | null>(null);
+    const twitterContainerRef =
+        useRef<HTMLDivElement | null>(
+            null
+        );
 
     const youtubeEmbedUrl =
-        type === "youtube" ? getYouTubeEmbedUrl(link) : null;
+        type === "youtube"
+            ? getYouTubeEmbedUrl(link)
+            : null;
 
     const twitterUrlType =
-        type === "twitter" ? getTwitterUrlType(link) : null;
+        type === "twitter"
+            ? getTwitterUrlType(link)
+            : null;
 
     useEffect(() => {
         if (
@@ -78,59 +119,123 @@ export function Card({
             return;
         }
 
-        const container = twitterContainerRef.current;
+        const container =
+            twitterContainerRef.current;
 
         container.innerHTML = "";
 
-        const blockquote = document.createElement("blockquote");
+        const blockquote =
+            document.createElement(
+                "blockquote"
+            );
 
-        blockquote.className = "twitter-tweet";
+        blockquote.className =
+            "twitter-tweet";
 
-        const linkElement = document.createElement("a");
+        const linkElement =
+            document.createElement("a");
 
         linkElement.href = link;
-        linkElement.textContent = "View this post on X";
 
-        blockquote.appendChild(linkElement);
-        container.appendChild(blockquote);
+        linkElement.textContent =
+            "View this post on X";
 
-        const loadTwitterWidget = () => {
-            const twitter = (
-                window as typeof window & {
-                    twttr?: {
-                        widgets?: {
-                            load: (element?: HTMLElement) => void;
-                        };
-                    };
-                }
-            ).twttr;
-
-            if (twitter?.widgets) {
-                twitter.widgets.load(container);
-            }
-        };
-
-        const existingScript = document.querySelector(
-            'script[src="https://platform.twitter.com/widgets.js"]'
+        blockquote.appendChild(
+            linkElement
         );
+
+        container.appendChild(
+            blockquote
+        );
+
+        const loadTwitterWidget =
+            () => {
+                const twitter = (
+                    window as typeof window & {
+                        twttr?: {
+                            widgets?: {
+                                load: (
+                                    element?: HTMLElement
+                                ) => void;
+                            };
+                        };
+                    }
+                ).twttr;
+
+                if (twitter?.widgets) {
+                    twitter.widgets.load(
+                        container
+                    );
+                }
+            };
+
+        const existingScript =
+            document.querySelector(
+                'script[src="https://platform.twitter.com/widgets.js"]'
+            );
 
         if (existingScript) {
             loadTwitterWidget();
         } else {
-            const script = document.createElement("script");
+            const script =
+                document.createElement(
+                    "script"
+                );
 
-            script.src = "https://platform.twitter.com/widgets.js";
+            script.src =
+                "https://platform.twitter.com/widgets.js";
+
             script.async = true;
 
-            script.onload = loadTwitterWidget;
+            script.onload =
+                loadTwitterWidget;
 
-            document.body.appendChild(script);
+            document.body.appendChild(
+                script
+            );
         }
 
         return () => {
             container.innerHTML = "";
         };
-    }, [link, type, twitterUrlType]);
+    }, [
+        link,
+        type,
+        twitterUrlType,
+    ]);
+
+    const handleFavorite =
+        async () => {
+            if (
+                isFavoriting ||
+                isPinning ||
+                isDeleting ||
+                !onFavorite
+            ) {
+                return;
+            }
+
+            await onFavorite(
+                id,
+                !isFavorite
+            );
+        };
+
+    const handlePin = async () => {
+        if (
+            isFavoriting ||
+            isPinning ||
+            isDeleting ||
+            !onPin
+        ) {
+            return;
+        }
+
+        await onPin(
+            id,
+            !isPinned
+        );
+    };
 
     return (
         <div>
@@ -157,19 +262,103 @@ export function Card({
 
                         {!isPublic && (
                             <>
+                                {/* Favorite */}
                                 <button
                                     type="button"
-                                    onClick={() => onEdit(id)}
-                                    disabled={isDeleting}
+                                    onClick={
+                                        handleFavorite
+                                    }
+                                    disabled={
+                                        isFavoriting ||
+                                        isPinning ||
+                                        isDeleting
+                                    }
+                                    aria-label={
+                                        isFavorite ===
+                                        true
+                                            ? "Remove from favorites"
+                                            : "Add to favorites"
+                                    }
+                                    title={
+                                        isFavorite ===
+                                        true
+                                            ? "Remove from favorites"
+                                            : "Add to favorites"
+                                    }
+                                    className="pr-2 text-lg text-yellow-500 hover:text-yellow-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    {isFavoriting
+                                        ? "..."
+                                        : isFavorite ===
+                                          true
+                                        ? "★"
+                                        : "☆"}
+                                </button>
+
+                                {/* Pin */}
+                                <button
+                                    type="button"
+                                    onClick={
+                                        handlePin
+                                    }
+                                    disabled={
+                                        isFavoriting ||
+                                        isPinning ||
+                                        isDeleting
+                                    }
+                                    aria-label={
+                                        isPinned ===
+                                        true
+                                            ? "Unpin content"
+                                            : "Pin content"
+                                    }
+                                    title={
+                                        isPinned ===
+                                        true
+                                            ? "Unpin content"
+                                            : "Pin content"
+                                    }
+                                    className="pr-2 text-lg text-gray-500 hover:text-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    {isPinning
+                                        ? "..."
+                                        : isPinned ===
+                                          true
+                                        ? "📌"
+                                        : "📍"}
+                                </button>
+
+                                {/* Edit */}
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onEdit(
+                                            id
+                                        )
+                                    }
+                                    disabled={
+                                        isDeleting ||
+                                        isFavoriting ||
+                                        isPinning
+                                    }
                                     className="pr-2 text-sm text-blue-500 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                                 >
                                     Edit
                                 </button>
 
+                                {/* Delete */}
                                 <button
                                     type="button"
-                                    onClick={() => onDelete(id)}
-                                    disabled={isDeleting}
+                                    onClick={() =>
+                                        onDelete(
+                                            id
+                                        )
+                                    }
+                                    disabled={
+                                        isDeleting ||
+                                        isFavoriting ||
+                                        isPinning
+                                    }
                                     className="text-sm text-red-500 hover:text-red-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                                 >
                                     {isDeleting
@@ -182,38 +371,45 @@ export function Card({
                 </div>
 
                 <div className="pt-4">
-                    {/* YouTube */}
-                    {type === "youtube" && youtubeEmbedUrl && (
-                        <iframe
-                            key={youtubeEmbedUrl}
-                            className="w-full"
-                            src={youtubeEmbedUrl}
-                            title={title}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            referrerPolicy="strict-origin-when-cross-origin"
-                            allowFullScreen
-                        ></iframe>
-                    )}
+                    {type === "youtube" &&
+                        youtubeEmbedUrl && (
+                            <iframe
+                                key={
+                                    youtubeEmbedUrl
+                                }
+                                className="w-full"
+                                src={
+                                    youtubeEmbedUrl
+                                }
+                                title={title}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                referrerPolicy="strict-origin-when-cross-origin"
+                                allowFullScreen
+                            ></iframe>
+                        )}
 
-                    {type === "youtube" && !youtubeEmbedUrl && (
-                        <p className="text-red-500 text-sm">
-                            Invalid YouTube link.
-                        </p>
-                    )}
+                    {type === "youtube" &&
+                        !youtubeEmbedUrl && (
+                            <p className="text-red-500 text-sm">
+                                Invalid YouTube link.
+                            </p>
+                        )}
 
-                    {/* X/Twitter post */}
                     {type === "twitter" &&
-                        twitterUrlType === "post" && (
+                        twitterUrlType ===
+                            "post" && (
                             <div
-                                ref={twitterContainerRef}
+                                ref={
+                                    twitterContainerRef
+                                }
                                 className="min-h-20"
                             ></div>
                         )}
 
-                    {/* X/Twitter profile */}
                     {type === "twitter" &&
-                        twitterUrlType === "profile" && (
+                        twitterUrlType ===
+                            "profile" && (
                             <div className="border rounded-md p-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white font-bold">
@@ -242,9 +438,9 @@ export function Card({
                             </div>
                         )}
 
-                    {/* Invalid X/Twitter URL */}
                     {type === "twitter" &&
-                        twitterUrlType === "invalid" && (
+                        twitterUrlType ===
+                            "invalid" && (
                             <p className="text-red-500 text-sm">
                                 Invalid X/Twitter link.
                             </p>

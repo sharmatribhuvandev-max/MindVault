@@ -63,6 +63,37 @@ TagSchema.index(
     }
 );
 
+const CollectionSchema = new Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+            minlength: 1,
+            maxlength: 50,
+        },
+
+        userId: {
+            type: mongoose.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+    },
+    {
+        timestamps: true,
+    }
+);
+
+CollectionSchema.index(
+    {
+        userId: 1,
+        name: 1,
+    },
+    {
+        unique: true,
+    }
+);
+
 const ContentSchema = new Schema(
     {
         title: {
@@ -94,6 +125,22 @@ const ContentSchema = new Schema(
             ref: "User",
             required: true,
         },
+
+        isFavorite: {
+            type: Boolean,
+            default: false,
+        },
+
+        isPinned: {
+            type: Boolean,
+            default: false,
+        },
+
+        collectionId: {
+            type: mongoose.Types.ObjectId,
+            ref: "Collection",
+            default: null,
+        },
     },
     {
         timestamps: true,
@@ -119,10 +166,27 @@ const LinkSchema = new Schema(
     }
 );
 
-export const UserModel = model("User", UserSchema);
+export const UserModel = model(
+    "User",
+    UserSchema
+);
 
-export const TagModel = model("Tag", TagSchema);
+export const TagModel = model(
+    "Tag",
+    TagSchema
+);
 
-export const LinkModel = model("Links", LinkSchema);
+export const LinkModel = model(
+    "Links",
+    LinkSchema
+);
 
-export const ContentModel = model("Content", ContentSchema);
+export const ContentModel = model(
+    "Content",
+    ContentSchema
+);
+
+export const CollectionModel = model(
+    "Collection",
+    CollectionSchema
+);
