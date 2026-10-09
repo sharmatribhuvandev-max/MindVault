@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import { BrainIcon } from "../icons/BrainIcon";
 import { TwitterIcon } from "../icons/TwitterIcon";
 import { YouTubeIcon } from "../icons/YoutubeIcon";
@@ -18,18 +20,13 @@ interface Collection {
 interface SidebarProps {
     selectedType: ContentFilter;
     onSelectType: (type: ContentFilter) => void;
-
     collections: Collection[];
     selectedCollectionId: string | null;
-    onSelectCollection: (
-        collectionId: string | null
-    ) => void;
-
-    onDeleteCollection: (
-        collectionId: string
-    ) => void;
-
+    onSelectCollection: (collectionId: string | null) => void;
+    onDeleteCollection: (collectionId: string) => void;
     deletingCollectionId: string | null;
+    isOpen?: boolean;
+    onClose?: () => void;
 }
 
 export function Sidebar({
@@ -40,116 +37,115 @@ export function Sidebar({
     onSelectCollection,
     onDeleteCollection,
     deletingCollectionId,
+    isOpen = false,
+    onClose,
 }: SidebarProps) {
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape") {
+                onClose?.();
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, onClose]);
+
+    function selectType(type: ContentFilter) {
+        onSelectType(type);
+        onSelectCollection(null);
+        onClose?.();
+    }
+
+    function selectCollection(collectionId: string) {
+        onSelectCollection(collectionId);
+        onClose?.();
+    }
+
     return (
-        <div className="h-screen bg-white w-72 fixed left-0 top-0 pl-6">
-            <div className="flex text-2xl pt-4 items-center">
-                <div className="pr-2">
-                    <BrainIcon />
+        <>
+            {isOpen && (
+                <button
+                    type="button"
+                    className="sidebar-backdrop"
+                    aria-label="Close navigation menu"
+                    onClick={onClose}
+                />
+            )}
+
+            <aside
+                id="brainly-sidebar"
+                aria-label="Main navigation"
+                className={`brainly-sidebar ${isOpen ? "is-open" : ""}`}
+            >
+                <div className="sidebar-brand">
+                    <span className="sidebar-brand-icon" aria-hidden="true">
+                        <BrainIcon />
+                    </span>
+                    <span>Brainly</span>
                 </div>
 
-                Brainly
-            </div>
+                <nav className="sidebar-navigation" aria-label="Content navigation">
+                    <SidebarItem
+                        text="All content"
+                        icon={<BrainIcon />}
+                        active={selectedType === "all" && selectedCollectionId === null}
+                        onClick={() => selectType("all")}
+                    />
 
-            <div className="pt-8 pl-4">
-                <SidebarItem
-                    text="All"
-                    icon={<BrainIcon />}
-                    active={
-                        selectedType === "all" &&
-                        selectedCollectionId === null
-                    }
-                    onClick={() => {
-                        onSelectType("all");
-                        onSelectCollection(null);
-                    }}
-                />
+                    <SidebarItem
+                        text="Twitter / X"
+                        icon={<TwitterIcon />}
+                        active={selectedType === "twitter" && selectedCollectionId === null}
+                        onClick={() => selectType("twitter")}
+                    />
 
-                <SidebarItem
-                    text="Twitter"
-                    icon={<TwitterIcon />}
-                    active={
-                        selectedType === "twitter" &&
-                        selectedCollectionId === null
-                    }
-                    onClick={() => {
-                        onSelectType("twitter");
-                        onSelectCollection(null);
-                    }}
-                />
+                    <SidebarItem
+                        text="YouTube"
+                        icon={<YouTubeIcon />}
+                        active={selectedType === "youtube" && selectedCollectionId === null}
+                        onClick={() => selectType("youtube")}
+                    />
 
-                <SidebarItem
-                    text="YouTube"
-                    icon={<YouTubeIcon />}
-                    active={
-                        selectedType === "youtube" &&
-                        selectedCollectionId === null
-                    }
-                    onClick={() => {
-                        onSelectType("youtube");
-                        onSelectCollection(null);
-                    }}
-                />
+                    {collections.length > 0 && (
+                        <section className="sidebar-collections" aria-labelledby="sidebar-collections-heading">
+                            <h2 id="sidebar-collections-heading" className="sidebar-section-title">
+                                Collections
+                            </h2>
 
-                {collections.length > 0 && (
-                    <div className="mt-8">
-                        <h2 className="text-sm font-semibold text-gray-500 mb-2">
-                            Collections
-                        </h2>
+                            <ul className="sidebar-collection-list">
+                                {collections.map((collection) => (
+                                    <li key={collection._id} className="sidebar-collection-row">
+                                        <div className="sidebar-collection-select">
+                                            <SidebarItem
+                                                text={collection.name}
+                                                icon={<BrainIcon />}
+                                                active={selectedCollectionId === collection._id}
+                                                onClick={() => selectCollection(collection._id)}
+                                            />
+                                        </div>
 
-                        {collections.map(
-                            (collection) => (
-                                <div
-                                    key={
-                                        collection._id
-                                    }
-                                    className="flex items-center gap-1 pr-2"
-                                >
-                                    <div className="flex-1 min-w-0">
-                                        <SidebarItem
-                                            text={
-                                                collection.name
-                                            }
-                                            icon={
-                                                <BrainIcon />
-                                            }
-                                            active={
-                                                selectedCollectionId ===
-                                                collection._id
-                                            }
-                                            onClick={() =>
-                                                onSelectCollection(
-                                                    collection._id
-                                                )
-                                            }
-                                        />
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            onDeleteCollection(
-                                                collection._id
-                                            )
-                                        }
-                                        disabled={
-                                            deletingCollectionId ===
-                                            collection._id
-                                        }
-                                        title="Delete collection"
-                                        className="flex-shrink-0 text-gray-400 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed px-2"
-                                    >
-                                        {deletingCollectionId ===
-                                        collection._id
-                                            ? "..."
-                                            : "×"}
-                                    </button>
-                                </div>
-                            )
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => onDeleteCollection(collection._id)}
+                                            disabled={deletingCollectionId === collection._id}
+                                            aria-label={`Delete collection ${collection.name}`}
+                                            title={`Delete ${collection.name}`}
+                                            className="sidebar-delete-collection"
+                                        >
+                                            {deletingCollectionId === collection._id ? "…" : "×"}
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
+                </nav>
+            </aside>
+        </>
     );
 }

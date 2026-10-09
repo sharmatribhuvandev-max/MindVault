@@ -14,19 +14,21 @@ export function SidebarItem({
     onClick,
 }: SidebarItemProps) {
     return (
-        <div
+        <button
+            type="button"
             onClick={onClick}
-            className={`flex items-center gap-3 px-3 py-2 rounded max-w-48 pl-4 transition-all duration-150 cursor-pointer ${
+            aria-pressed={active}
+            className={`sidebar-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                 active
-                    ? "bg-gray-200 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-200"
+                    ? "bg-violet-100 text-violet-950"
+                    : "text-gray-700 hover:bg-gray-100"
             }`}
         >
-            <div className="w-5 h-5 flex items-center justify-center">
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center" aria-hidden="true">
                 {icon}
-            </div>
+            </span>
 
-            <div>{text}</div>
-        </div>
+            <span className="min-w-0 flex-1 break-words">{text}</span>
+        </button>
     );
 }

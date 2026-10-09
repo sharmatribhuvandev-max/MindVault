@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CrossIcon } from "../icons/CrossIcon";
 
@@ -45,6 +45,8 @@ export function CreateContentModal({
     editContent = null,
     onUpdated,
 }: CreateContentModalProps) {
+    const titleInputRef = useRef<HTMLInputElement>(null);
+
     const [title, setTitle] = useState("");
 
     const [link, setLink] = useState("");
@@ -95,6 +97,21 @@ export function CreateContentModal({
         useState("");
 
     const isEditMode = editContent !== null;
+
+    useEffect(() => {
+        if (!open) return;
+
+        titleInputRef.current?.focus();
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape" && !loading && !tagLoading && !collectionLoading) {
+                onClose();
+            }
+        }
+
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [open, loading, tagLoading, collectionLoading, onClose]);
 
     useEffect(() => {
         if (!open) {
@@ -563,65 +580,47 @@ export function CreateContentModal({
     return (
         <div>
             {open && (
-                <div>
+                <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 sm:items-center sm:p-6">
                     <div
-                        className="
-                            w-screen
-                            h-screen
-                            bg-slate-500
-                            fixed
-                            top-0
-                            left-0
-                            opacity-60
-                            flex
-                            justify-center
-                        "
-                    ></div>
-
-                    <div
-                        className="
-                            w-screen
-                            h-screen
-                            fixed
-                            top-0
-                            left-0
-                            flex
-                            justify-center
-                        "
+                        className="relative my-auto w-full max-w-xl rounded-xl bg-white p-4 shadow-xl sm:p-6"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="content-modal-title"
+                        tabIndex={-1}
                     >
-                        <div className="flex flex-col justify-center">
-                            <span className="bg-white opacity-100 p-4 rounded fixed w-96 max-h-[90vh] overflow-y-auto">
                                 <div className="flex justify-between items-center">
-                                    <h2 className="text-lg font-semibold">
+                                    <h2 id="content-modal-title" className="text-lg font-semibold">
                                         {isEditMode
                                             ? "Edit Content"
                                             : "Add Content"}
                                     </h2>
 
-                                    <div
+                                    <button
+                                        type="button"
+                                        aria-label="Close content dialog"
                                         onClick={() => {
-                                            if (
-                                                !loading &&
-                                                !tagLoading &&
-                                                !collectionLoading
-                                            ) {
-                                                onClose();
-                                            }
+                                            if (!loading && !tagLoading && !collectionLoading) onClose();
                                         }}
-                                        className={
-                                            loading ||
-                                                tagLoading ||
-                                                collectionLoading
-                                                ? "text-gray-400"
-                                                : "cursor-pointer"
-                                        }
+                                        disabled={loading || tagLoading || collectionLoading}
+                                        className="rounded-md p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
                                     >
                                         <CrossIcon />
-                                    </div>
+                                    </button>
                                 </div>
 
-                                <div className="mt-4">
+                                <form
+                                    className="mt-4 max-h-[calc(100dvh-8rem)] space-y-4 overflow-y-auto pr-1"
+                                    onSubmit={(event) => {
+                                        event.preventDefault();
+                                        void submitContent();
+                                    }}
+                                >
                                     <Input
+                                        id="content-title"
+                                        label="Title"
+                                        reference={titleInputRef}
+                                        required
+                                        disabled={loading}
                                         value={title}
                                         onChange={(e) => {
                                             setTitle(
@@ -632,6 +631,10 @@ export function CreateContentModal({
                                     />
 
                                     <Input
+                                        id="content-link"
+                                        label="Link"
+                                        required
+                                        disabled={loading}
                                         value={link}
                                         onChange={(e) => {
                                             setLink(
@@ -642,11 +645,12 @@ export function CreateContentModal({
                                     />
 
                                     <div className="mt-3">
-                                        <label className="block text-sm font-medium mb-1">
+                                        <label htmlFor="content-notes" className="mb-1 block text-sm font-medium text-gray-800">
                                             Notes
                                         </label>
 
                                         <textarea
+                                            id="content-notes"
                                             value={notes}
                                             onChange={(event) =>
                                                 setNotes(event.target.value)
@@ -655,29 +659,18 @@ export function CreateContentModal({
                                             maxLength={2000}
                                             rows={4}
                                             disabled={loading}
-                                            className="
-                                            w-full
-                                            border
-                                            border-gray-300
-                                            rounded-md
-                                            px-3
-                                            py-2
-                                            outline-none
-                                            resize-none
-                                            focus:border-gray-500
-                                        " 
+                                            className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus-visible:border-violet-600 focus-visible:ring-2 focus-visible:ring-violet-600/20 disabled:bg-gray-100"
                                         />
 
                                         <div className="text-xs text-gray-500 text-right mt-1">
                                             {notes.length}/2000
                                         </div>
                                     </div>
-                                </div>
 
                                 <div>
-                                    <h1>Type</h1>
+                                    <h2 className="text-sm font-semibold text-gray-800">Content type</h2>
 
-                                    <div className="flex gap-1 justify-center pb-2">
+                                    <div className="flex flex-wrap gap-2 pb-2">
                                         <Button
                                             text="Youtube"
                                             variant={
@@ -711,11 +704,12 @@ export function CreateContentModal({
                                 </div>
 
                                 <div className="mt-3">
-                                    <h1 className="font-medium">
+                                    <label htmlFor="content-collection" className="mb-1 block text-sm font-semibold text-gray-800">
                                         Collection
-                                    </h1>
+                                    </label>
 
                                     <select
+                                        id="content-collection"
                                         value={
                                             selectedCollectionId
                                         }
@@ -861,9 +855,9 @@ export function CreateContentModal({
                                 </div>
 
                                 <div className="mt-3">
-                                    <h1 className="font-medium">
+                                    <h2 className="mb-1 text-sm font-semibold text-gray-800">
                                         Tags
-                                    </h1>
+                                    </h2>
 
                                     <div className="flex flex-wrap gap-2 mt-2">
                                         {selectedTags.length ===
@@ -1089,39 +1083,40 @@ export function CreateContentModal({
                                     )}
 
                                     {tagError && (
-                                        <div className="text-red-500 text-sm mt-2">
+                                        <div role="alert" aria-live="polite" className="mt-2 text-sm text-red-700">
                                             {tagError}
                                         </div>
                                     )}
                                 </div>
 
                                 {error && (
-                                    <div className="text-red-500 text-sm mt-2">
+                                    <div role="alert" aria-live="polite" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 mt-2">
                                         {error}
                                     </div>
                                 )}
 
-                                <div className="flex justify-center mt-3">
-                                    <Button
-                                        onClick={
-                                            submitContent
-                                        }
-                                        variant="primary"
-                                        text={
-                                            loading
-                                                ? isEditMode
-                                                    ? "Updating..."
-                                                    : "Adding..."
-                                                : isEditMode
-                                                    ? "Update"
-                                                    : "Submit"
-                                        }
-                                    />
-                                </div>
-                            </span>
-                        </div>
+                                    <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={onClose}
+                                            disabled={loading || tagLoading || collectionLoading}
+                                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:opacity-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={loading || tagLoading || collectionLoading}
+                                            className="rounded-lg bg-violet-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {loading
+                                                ? isEditMode ? "Saving changes…" : "Adding content…"
+                                                : isEditMode ? "Save changes" : "Add content"}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                     </div>
-                </div>
             )}
         </div>
     );

@@ -239,23 +239,26 @@ export function Card({
     };
 
     return (
-        <div>
-            <div className="p-4 bg-white rounded-md border-gray-200 max-w-72 border min-h-48 min-w-72">
-                <div className="flex justify-between">
-                    <div className="flex items-center text-md">
-                        <div className="text-gray-500 pr-2">
+        <div className="min-w-0 h-full">
+            <article className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
+                <div className="flex flex-col gap-3">
+                    <div className="flex min-w-0 items-start gap-2 text-base font-semibold text-slate-900">
+                        <span className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true">
                             <ShareIcon />
-                        </div>
+                        </span>
 
-                        {title}
+                        <h2 className="min-w-0 break-words leading-snug">{title}</h2>
                     </div>
 
-                    <div className="flex items-center">
-                        <div className="pr-2 text-gray-500">
+                    <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+                        <div className="text-slate-500">
                             <a
                                 href={link}
                                 target="_blank"
-                                rel="noreferrer"
+                                rel="noopener noreferrer"
+                                aria-label={`Open ${title} in a new tab`}
+                                title="Open original link"
+                                className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                             >
                                 <ShareIcon />
                             </a>
@@ -286,7 +289,8 @@ export function Card({
                                             ? "Remove from favorites"
                                             : "Add to favorites"
                                     }
-                                    className="pr-2 text-lg text-yellow-500 hover:text-yellow-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    aria-pressed={isFavorite}
+                                    className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md text-xl text-amber-600 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                 >
                                     {isFavoriting
                                         ? "..."
@@ -319,7 +323,8 @@ export function Card({
                                             ? "Unpin content"
                                             : "Pin content"
                                     }
-                                    className="pr-2 text-lg text-gray-500 hover:text-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    aria-pressed={isPinned}
+                                    className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md text-xl text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                 >
                                     {isPinning
                                         ? "..."
@@ -342,7 +347,7 @@ export function Card({
                                         isFavoriting ||
                                         isPinning
                                     }
-                                    className="pr-2 text-sm text-blue-500 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    className="inline-flex min-h-9 items-center rounded-md px-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                 >
                                     Edit
                                 </button>
@@ -360,7 +365,7 @@ export function Card({
                                         isFavoriting ||
                                         isPinning
                                     }
-                                    className="text-sm text-red-500 hover:text-red-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    className="inline-flex min-h-9 items-center rounded-md px-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                 >
                                     {isDeleting
                                         ? "Deleting..."
@@ -378,12 +383,12 @@ export function Card({
                                 key={
                                     youtubeEmbedUrl
                                 }
-                                className="w-full"
+                                className="aspect-video w-full rounded-lg border-0 bg-slate-100"
+                                loading="lazy"
                                 src={
                                     youtubeEmbedUrl
                                 }
                                 title={title}
-                                frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 referrerPolicy="strict-origin-when-cross-origin"
                                 allowFullScreen
@@ -404,14 +409,14 @@ export function Card({
                                 ref={
                                     twitterContainerRef
                                 }
-                                className="min-h-20"
+                                className="min-h-20 min-w-0 max-w-full overflow-hidden [&_iframe]:max-w-full"
                             ></div>
                         )}
 
                     {type === "twitter" &&
                         twitterUrlType ===
                         "profile" && (
-                            <div className="border rounded-md p-4">
+                            <div className="min-w-0 rounded-lg border border-slate-200 p-3 sm:p-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white font-bold">
                                         X
@@ -431,8 +436,8 @@ export function Card({
                                 <a
                                     href={link}
                                     target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-block mt-3 text-blue-500 hover:text-blue-700"
+                                    rel="noopener noreferrer"
+                                    className="mt-3 inline-block rounded text-indigo-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                 >
                                     Open Profile
                                 </a>
@@ -455,12 +460,12 @@ export function Card({
                             Notes
                         </h3>
 
-                        <p className="text-sm text-gray-600 whitespace-pre-wrap break-words">
+                        <p className="max-h-32 overflow-auto whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-600" title="Scroll to read longer notes">
                             {notes}
                         </p>
                     </div>
                 )}
-            </div>
+            </article>
         </div>
     );
 }

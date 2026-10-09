@@ -59,6 +59,9 @@ export default function Dashboard() {
     const [modalOpen, setModalOpen] =
         useState(false);
 
+    const [sidebarOpen, setSidebarOpen] =
+        useState(false);
+
     const [deletingId, setDeletingId] =
         useState<string | null>(null);
 
@@ -751,7 +754,7 @@ export default function Dashboard() {
 
     return (
         <>
-            <div>
+            <div className="dashboard-shell">
                 <Sidebar
                     selectedType={selectedType}
                     onSelectType={setSelectedType}
@@ -768,9 +771,26 @@ export default function Dashboard() {
                     deletingCollectionId={
                         deletingCollectionId
                     }
+                    isOpen={sidebarOpen}
+                    onClose={() => setSidebarOpen(false)}
                 />
 
-                <div className="p-4 ml-72 min-h-screen bg-gray-100">
+                <main className="dashboard-main">
+                    <div className="dashboard-mobile-toolbar">
+                        <button
+                            type="button"
+                            className="dashboard-menu-button"
+                            onClick={() => setSidebarOpen(true)}
+                            aria-expanded={sidebarOpen}
+                            aria-controls="brainly-sidebar"
+                            aria-label="Open navigation menu"
+                        >
+                            <span className="dashboard-menu-icon" aria-hidden="true">☰</span>
+                            <span>Menu</span>
+                        </button>
+                        <span className="dashboard-mobile-brand">Brainly</span>
+                    </div>
+
                     <CreateContentModal
                         open={modalOpen}
                         onClose={
@@ -806,7 +826,14 @@ export default function Dashboard() {
                         }
                     />
 
-                    <div className="flex justify-end gap-4">
+                    <header className="dashboard-header">
+                        <div className="dashboard-heading">
+                            <p className="dashboard-eyebrow">Your personal knowledge space</p>
+                            <h1 className="dashboard-title">My Brain</h1>
+                            <p className="dashboard-subtitle">Keep your ideas, useful links, and learning notes in one place.</p>
+                        </div>
+
+                        <div className="dashboard-actions">
                         <Button
                             onClick={() => {
                                 setEditingContent(
@@ -852,16 +879,17 @@ export default function Dashboard() {
                             variant="secondary"
                             text="Logout"
                         />
-                    </div>
+                        </div>
+                    </header>
 
                     {deleteError && (
-                        <div className="mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md">
+                        <div className="dashboard-feedback mt-4 border border-red-300 bg-red-50 text-red-700">
                             {deleteError}
                         </div>
                     )}
 
-                    <div className="mt-6">
-                        <div className="relative max-w-xl">
+                    <section className="dashboard-search-section">
+                        <div className="dashboard-search-wrap relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                                 🔍
                             </span>
@@ -878,12 +906,13 @@ export default function Dashboard() {
                                     )
                                 }
                                 placeholder="Search your content..."
-                                className="w-full rounded-md border border-gray-300 bg-white py-3 pl-10 pr-4 outline-none focus:border-gray-500"
+                                aria-label="Search saved content"
+                                className="dashboard-search w-full border bg-white py-3 pl-10 pr-4 outline-none"
                             />
                         </div>
-                    </div>
+                    </section>
 
-                    <div className="flex gap-2 mt-4">
+                    <nav className="dashboard-filters" aria-label="Filter saved content">
                         <button
                             onClick={() =>
                                 setSelectedType(
@@ -958,11 +987,11 @@ export default function Dashboard() {
                         >
                             Pinned
                         </button>
-                    </div>
+                    </nav>
 
                     {filteredContents.length >
                         0 ? (
-                        <div className="flex gap-4 flex-wrap mt-4">
+                        <section className="dashboard-content-grid" aria-label="Saved content">
                             {filteredContents.map(
                                 ({
                                     _id,
@@ -1013,9 +1042,9 @@ export default function Dashboard() {
                                     />
                                 )
                             )}
-                        </div>
+                        </section>
                     ) : (
-                        <div className="mt-12 flex flex-col items-center justify-center text-center">
+                        <section className="dashboard-empty-state" aria-live="polite">
                             <h2 className="text-2xl font-semibold text-gray-800">
                                 {
                                     emptyState.title
@@ -1049,9 +1078,9 @@ export default function Dashboard() {
                                     />
                                 </div>
                             )}
-                        </div>
+                        </section>
                     )}
-                </div>
+                </main>
             </div>
         </>
     );
