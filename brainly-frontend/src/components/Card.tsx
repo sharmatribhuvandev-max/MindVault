@@ -7,7 +7,7 @@ interface CardProps {
     title: string;
     link: string;
     type: "twitter" | "youtube";
-
+    notes?: string;
     isFavorite?: boolean;
     isPinned?: boolean;
 
@@ -56,10 +56,10 @@ function getTwitterUrlType(url: string) {
         const isTwitter =
             parsedUrl.hostname === "twitter.com" ||
             parsedUrl.hostname ===
-                "www.twitter.com" ||
+            "www.twitter.com" ||
             parsedUrl.hostname === "x.com" ||
             parsedUrl.hostname ===
-                "www.x.com";
+            "www.x.com";
 
         if (!isTwitter) {
             return "invalid";
@@ -84,6 +84,7 @@ export function Card({
     title,
     link,
     type,
+    notes = "",
     isFavorite = false,
     isPinned = false,
     onFavorite,
@@ -275,13 +276,13 @@ export function Card({
                                     }
                                     aria-label={
                                         isFavorite ===
-                                        true
+                                            true
                                             ? "Remove from favorites"
                                             : "Add to favorites"
                                     }
                                     title={
                                         isFavorite ===
-                                        true
+                                            true
                                             ? "Remove from favorites"
                                             : "Add to favorites"
                                     }
@@ -290,9 +291,9 @@ export function Card({
                                     {isFavoriting
                                         ? "..."
                                         : isFavorite ===
-                                          true
-                                        ? "★"
-                                        : "☆"}
+                                            true
+                                            ? "★"
+                                            : "☆"}
                                 </button>
 
                                 {/* Pin */}
@@ -308,13 +309,13 @@ export function Card({
                                     }
                                     aria-label={
                                         isPinned ===
-                                        true
+                                            true
                                             ? "Unpin content"
                                             : "Pin content"
                                     }
                                     title={
                                         isPinned ===
-                                        true
+                                            true
                                             ? "Unpin content"
                                             : "Pin content"
                                     }
@@ -323,9 +324,9 @@ export function Card({
                                     {isPinning
                                         ? "..."
                                         : isPinned ===
-                                          true
-                                        ? "📌"
-                                        : "📍"}
+                                            true
+                                            ? "📌"
+                                            : "📍"}
                                 </button>
 
                                 {/* Edit */}
@@ -398,7 +399,7 @@ export function Card({
 
                     {type === "twitter" &&
                         twitterUrlType ===
-                            "post" && (
+                        "post" && (
                             <div
                                 ref={
                                     twitterContainerRef
@@ -409,7 +410,7 @@ export function Card({
 
                     {type === "twitter" &&
                         twitterUrlType ===
-                            "profile" && (
+                        "profile" && (
                             <div className="border rounded-md p-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white font-bold">
@@ -440,12 +441,25 @@ export function Card({
 
                     {type === "twitter" &&
                         twitterUrlType ===
-                            "invalid" && (
+                        "invalid" && (
                             <p className="text-red-500 text-sm">
                                 Invalid X/Twitter link.
                             </p>
                         )}
                 </div>
+
+                {/* Notes: visible only on private dashboard cards */}
+                {!isPublic && notes.trim() !== "" && (
+                    <div className="mt-4 border-t border-gray-200 pt-3">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-1">
+                            Notes
+                        </h3>
+
+                        <p className="text-sm text-gray-600 whitespace-pre-wrap break-words">
+                            {notes}
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

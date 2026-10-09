@@ -45,13 +45,14 @@ interface Content {
     tags: Tag[];
     isFavorite: boolean;
     isPinned: boolean;
+    notes?: string;
     collectionId:
-        | string
-        | {
-              _id: string;
-              name: string;
-          }
-        | null;
+    | string
+    | {
+        _id: string;
+        name: string;
+    }
+    | null;
 }
 
 export default function Dashboard() {
@@ -164,15 +165,15 @@ export default function Dashboard() {
 
                 const contentCollectionId =
                     typeof content.collectionId ===
-                    "string"
+                        "string"
                         ? content.collectionId
                         : content.collectionId?._id ||
-                          null;
+                        null;
 
                 const matchesCollection =
                     selectedCollectionId === null ||
                     contentCollectionId ===
-                        selectedCollectionId;
+                    selectedCollectionId;
 
                 const matchesSearch =
                     !query ||
@@ -180,6 +181,9 @@ export default function Dashboard() {
                         .toLowerCase()
                         .includes(query) ||
                     content.link
+                        .toLowerCase()
+                        .includes(query) ||
+                    (content.notes || "")
                         .toLowerCase()
                         .includes(query);
 
@@ -261,7 +265,7 @@ export default function Dashboard() {
 
                 alert(
                     error.response?.data?.message ||
-                        "Failed to create share link. Please try again."
+                    "Failed to create share link. Please try again."
                 );
 
                 return;
@@ -320,7 +324,7 @@ export default function Dashboard() {
 
                 alert(
                     error.response?.data?.message ||
-                        "Failed to disable sharing. Please try again."
+                    "Failed to disable sharing. Please try again."
                 );
 
                 return;
@@ -390,7 +394,7 @@ export default function Dashboard() {
 
                 setDeleteError(
                     error.response?.data?.message ||
-                        "Failed to delete content. Please try again."
+                    "Failed to delete content. Please try again."
                 );
 
                 return;
@@ -454,7 +458,7 @@ export default function Dashboard() {
 
                 alert(
                     error.response?.data?.message ||
-                        "Failed to update favorite. Please try again."
+                    "Failed to update favorite. Please try again."
                 );
 
                 return;
@@ -518,7 +522,7 @@ export default function Dashboard() {
 
                 alert(
                     error.response?.data?.message ||
-                        "Failed to update pinned state. Please try again."
+                    "Failed to update pinned state. Please try again."
                 );
 
                 return;
@@ -610,7 +614,7 @@ export default function Dashboard() {
 
                 alert(
                     error.response?.data?.message ||
-                        "Failed to delete collection. Please try again."
+                    "Failed to delete collection. Please try again."
                 );
 
                 return;
@@ -640,11 +644,11 @@ export default function Dashboard() {
             link: content.link,
             type: content.type,
             tags: content.tags || [],
+            notes: content.notes || "",
             isFavorite: content.isFavorite,
             isPinned: content.isPinned,
             collectionId: content.collectionId,
         });
-
         setModalOpen(true);
     }
 
@@ -775,24 +779,26 @@ export default function Dashboard() {
                         editContent={
                             editingContent
                                 ? {
-                                      id: editingContent._id,
-                                      title:
-                                          editingContent.title,
-                                      link:
-                                          editingContent.link,
-                                      type:
-                                          editingContent.type,
-                                      tags:
-                                          editingContent.tags,
-                                      collectionId:
-                                          typeof editingContent.collectionId ===
-                                          "string"
-                                              ? editingContent.collectionId
-                                              : editingContent
-                                                    .collectionId
-                                                    ?._id ||
-                                                null,
-                                  }
+                                    id: editingContent._id,
+                                    title:
+                                        editingContent.title,
+                                    link:
+                                        editingContent.link,
+                                    type:
+                                        editingContent.type,
+                                    tags:
+                                        editingContent.tags,
+                                    notes:
+                                        editingContent.notes || "",
+                                    collectionId:
+                                        typeof editingContent.collectionId ===
+                                            "string"
+                                            ? editingContent.collectionId
+                                            : editingContent
+                                                .collectionId
+                                                ?._id ||
+                                            null,
+                                }
                                 : null
                         }
                         onUpdated={
@@ -884,12 +890,11 @@ export default function Dashboard() {
                                     "all"
                                 )
                             }
-                            className={`px-4 py-2 rounded-md border ${
-                                selectedType ===
+                            className={`px-4 py-2 rounded-md border ${selectedType ===
                                 "all"
-                                    ? "bg-black text-white"
-                                    : "bg-white text-gray-700"
-                            }`}
+                                ? "bg-black text-white"
+                                : "bg-white text-gray-700"
+                                }`}
                         >
                             All
                         </button>
@@ -900,12 +905,11 @@ export default function Dashboard() {
                                     "youtube"
                                 )
                             }
-                            className={`px-4 py-2 rounded-md border ${
-                                selectedType ===
+                            className={`px-4 py-2 rounded-md border ${selectedType ===
                                 "youtube"
-                                    ? "bg-black text-white"
-                                    : "bg-white text-gray-700"
-                            }`}
+                                ? "bg-black text-white"
+                                : "bg-white text-gray-700"
+                                }`}
                         >
                             YouTube
                         </button>
@@ -916,12 +920,11 @@ export default function Dashboard() {
                                     "twitter"
                                 )
                             }
-                            className={`px-4 py-2 rounded-md border ${
-                                selectedType ===
+                            className={`px-4 py-2 rounded-md border ${selectedType ===
                                 "twitter"
-                                    ? "bg-black text-white"
-                                    : "bg-white text-gray-700"
-                            }`}
+                                ? "bg-black text-white"
+                                : "bg-white text-gray-700"
+                                }`}
                         >
                             Twitter
                         </button>
@@ -932,12 +935,11 @@ export default function Dashboard() {
                                     "favorites"
                                 )
                             }
-                            className={`px-4 py-2 rounded-md border ${
-                                selectedType ===
+                            className={`px-4 py-2 rounded-md border ${selectedType ===
                                 "favorites"
-                                    ? "bg-black text-white"
-                                    : "bg-white text-gray-700"
-                            }`}
+                                ? "bg-black text-white"
+                                : "bg-white text-gray-700"
+                                }`}
                         >
                             Favorites
                         </button>
@@ -948,19 +950,18 @@ export default function Dashboard() {
                                     "pinned"
                                 )
                             }
-                            className={`px-4 py-2 rounded-md border ${
-                                selectedType ===
+                            className={`px-4 py-2 rounded-md border ${selectedType ===
                                 "pinned"
-                                    ? "bg-black text-white"
-                                    : "bg-white text-gray-700"
-                            }`}
+                                ? "bg-black text-white"
+                                : "bg-white text-gray-700"
+                                }`}
                         >
                             Pinned
                         </button>
                     </div>
 
                     {filteredContents.length >
-                    0 ? (
+                        0 ? (
                         <div className="flex gap-4 flex-wrap mt-4">
                             {filteredContents.map(
                                 ({
@@ -968,6 +969,7 @@ export default function Dashboard() {
                                     type,
                                     link,
                                     title,
+                                    notes,
                                     isFavorite,
                                     isPinned,
                                 }: Content) => (
@@ -977,6 +979,7 @@ export default function Dashboard() {
                                         type={type}
                                         link={link}
                                         title={title}
+                                        notes={notes || ""}
                                         isFavorite={
                                             isFavorite
                                         }

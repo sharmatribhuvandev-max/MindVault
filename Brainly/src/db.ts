@@ -141,6 +141,13 @@ const ContentSchema = new Schema(
             ref: "Collection",
             default: null,
         },
+
+        notes: {
+            type: String,
+            default: "",
+            trim: true,
+            maxlength: 2000,
+        },
     },
     {
         timestamps: true,

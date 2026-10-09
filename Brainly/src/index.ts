@@ -322,6 +322,39 @@ app.post(
 
         const collectionId = req.body.collectionId;
 
+        const notes = req.body.notes;
+
+        /*
+         * =========================
+         * NOTES VALIDATION
+         * =========================
+         */
+
+        let validNotes = "";
+
+        if (notes !== undefined) {
+
+            if (typeof notes !== "string") {
+
+                return res.status(400).json({
+                    message: "Notes must be a string"
+                });
+
+            }
+
+            validNotes = notes.trim();
+
+            if (validNotes.length > 2000) {
+
+                return res.status(400).json({
+                    message:
+                        "Notes cannot exceed 2000 characters"
+                });
+
+            }
+
+        }
+
         const userId = new mongoose.Types.ObjectId(
             req.userId!
         );
@@ -452,7 +485,8 @@ app.post(
             title,
             userId,
             tags: tagIds,
-            collectionId: validCollectionId
+            collectionId: validCollectionId,
+            notes: validNotes
         });
 
         return res.json({
@@ -531,7 +565,8 @@ app.put(
             link,
             type,
             tags,
-            collectionId
+            collectionId,
+            notes
         } = req.body;
 
         if (
@@ -549,9 +584,46 @@ app.put(
 
         }
 
+        /*
+         * =========================
+         * NOTES VALIDATION
+         * =========================
+         */
+
+        let validNotes: string | undefined;
+
+        if (notes !== undefined) {
+
+            if (typeof notes !== "string") {
+
+                return res.status(400).json({
+                    message: "Notes must be a string"
+                });
+
+            }
+
+            validNotes = notes.trim();
+
+            if (validNotes.length > 2000) {
+
+                return res.status(400).json({
+                    message:
+                        "Notes cannot exceed 2000 characters"
+                });
+
+            }
+
+        }
+
         const userId = new mongoose.Types.ObjectId(
             req.userId!
         );
+
+        /*
+         * =========================
+         * OWNERSHIP CHECK
+         * =========================
+         */
 
         const content = await ContentModel.findOne({
             _id: contentId,
@@ -571,6 +643,18 @@ app.put(
         content.link = link.trim();
 
         content.type = type;
+
+        /*
+         * =========================
+         * UPDATE NOTES
+         * =========================
+         */
+
+        if (validNotes !== undefined) {
+
+            content.notes = validNotes;
+
+        }
 
         /*
          * =========================
@@ -1190,10 +1274,14 @@ app.get(
 
         }
 
+        /*
+         * Personal notes must never be exposed
+         * through the public shared Brain.
+         */
         const content =
             await ContentModel.find({
                 userId: link.userId
-            });
+            }).select("-notes");
 
         console.log(link);
 

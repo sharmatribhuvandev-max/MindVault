@@ -28,6 +28,7 @@ interface EditContent {
     link: string;
     type: ContentType;
     tags: Tag[];
+    notes: string;
     collectionId: string | null;
 }
 
@@ -47,6 +48,8 @@ export function CreateContentModal({
     const [title, setTitle] = useState("");
 
     const [link, setLink] = useState("");
+
+    const [notes, setNotes] = useState("");
 
     const [type, setType] =
         useState<ContentType>("youtube");
@@ -103,6 +106,8 @@ export function CreateContentModal({
 
             setLink(editContent.link);
 
+            setNotes(editContent.notes || "");
+
             setType(editContent.type);
 
             setSelectedTags(editContent.tags || []);
@@ -114,6 +119,8 @@ export function CreateContentModal({
             setTitle("");
 
             setLink("");
+
+            setNotes("");
 
             setType("youtube");
 
@@ -190,7 +197,7 @@ export function CreateContentModal({
                 } else {
                     setTagError(
                         error.response?.data?.message ||
-                            "Failed to load tags."
+                        "Failed to load tags."
                     );
                 }
             } else {
@@ -238,7 +245,7 @@ export function CreateContentModal({
                 } else {
                     setCollectionError(
                         error.response?.data?.message ||
-                            "Failed to load collections."
+                        "Failed to load collections."
                     );
                 }
             } else {
@@ -327,7 +334,7 @@ export function CreateContentModal({
                 } else {
                     setCollectionError(
                         error.response?.data?.message ||
-                            "Failed to create collection."
+                        "Failed to create collection."
                     );
                 }
             } else {
@@ -443,7 +450,7 @@ export function CreateContentModal({
                 } else {
                     setTagError(
                         error.response?.data?.message ||
-                            "Failed to create tag."
+                        "Failed to create tag."
                     );
                 }
             } else {
@@ -491,6 +498,7 @@ export function CreateContentModal({
                         link: link.trim(),
                         type,
                         tags: tagIds,
+                        notes: notes.trim(),
                         collectionId,
                     },
                     {
@@ -512,6 +520,7 @@ export function CreateContentModal({
                         type,
                         tags: tagIds,
                         collectionId,
+                        notes: notes.trim(),
                     },
                     {
                         headers: {
@@ -538,7 +547,7 @@ export function CreateContentModal({
                 } else {
                     setError(
                         error.response?.data?.message ||
-                            "Failed to save content. Please try again."
+                        "Failed to save content. Please try again."
                     );
                 }
             } else {
@@ -601,8 +610,8 @@ export function CreateContentModal({
                                         }}
                                         className={
                                             loading ||
-                                            tagLoading ||
-                                            collectionLoading
+                                                tagLoading ||
+                                                collectionLoading
                                                 ? "text-gray-400"
                                                 : "cursor-pointer"
                                         }
@@ -631,6 +640,38 @@ export function CreateContentModal({
                                         }}
                                         placeholder="Link"
                                     />
+
+                                    <div className="mt-3">
+                                        <label className="block text-sm font-medium mb-1">
+                                            Notes
+                                        </label>
+
+                                        <textarea
+                                            value={notes}
+                                            onChange={(event) =>
+                                                setNotes(event.target.value)
+                                            }
+                                            placeholder="Add personal notes (optional)"
+                                            maxLength={2000}
+                                            rows={4}
+                                            disabled={loading}
+                                            className="
+                                            w-full
+                                            border
+                                            border-gray-300
+                                            rounded-md
+                                            px-3
+                                            py-2
+                                            outline-none
+                                            resize-none
+                                            focus:border-gray-500
+                                        " 
+                                        />
+
+                                        <div className="text-xs text-gray-500 text-right mt-1">
+                                            {notes.length}/2000
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div>
@@ -641,7 +682,7 @@ export function CreateContentModal({
                                             text="Youtube"
                                             variant={
                                                 type ===
-                                                "youtube"
+                                                    "youtube"
                                                     ? "primary"
                                                     : "secondary"
                                             }
@@ -656,7 +697,7 @@ export function CreateContentModal({
                                             text="Twitter"
                                             variant={
                                                 type ===
-                                                "twitter"
+                                                    "twitter"
                                                     ? "primary"
                                                     : "secondary"
                                             }
@@ -685,7 +726,6 @@ export function CreateContentModal({
                                         }
                                         disabled={
                                             loading ||
-                                            tagLoading ||
                                             collectionLoading
                                         }
                                         className="
@@ -827,7 +867,7 @@ export function CreateContentModal({
 
                                     <div className="flex flex-wrap gap-2 mt-2">
                                         {selectedTags.length ===
-                                        0 ? (
+                                            0 ? (
                                             <p className="text-sm text-gray-500">
                                                 No tags selected.
                                             </p>
