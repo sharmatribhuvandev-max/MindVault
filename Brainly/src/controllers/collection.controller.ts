@@ -11,7 +11,7 @@ export async function createCollection(
     req: Request,
     res: Response
 ) {
-    const { name } = req.body;
+    const { name } = req.body ?? {};
 
     if (
         typeof name !== "string" ||
@@ -44,18 +44,20 @@ export async function createCollection(
             message: "Collection created successfully",
             collection,
         });
-    } catch (error: any) {
-        if (error?.code === 11000) {
+    } catch (error: unknown) {
+        if (
+            typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            error.code === 11000
+        ) {
             return res.status(409).json({
                 message: "A collection with this name already exists",
             });
         }
 
-        console.error("Create collection error:", error);
-
-        return res.status(500).json({
-            message: "Failed to create collection",
-        });
+        // Let the centralized Express error handler handle unexpected errors.
+        throw error;
     }
 }
 

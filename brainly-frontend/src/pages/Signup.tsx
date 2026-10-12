@@ -5,6 +5,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { Input } from "../components/Input";
 import { BACKEND_URL } from "../config";
 
+type SignupResponse = {
+    message?: string;
+};
+
+type SignupErrorResponse = {
+    message?: string;
+};
+
 export function Signup() {
     const usernameRef = useRef<HTMLInputElement>(null);
     const passwordRef = useRef<HTMLInputElement>(null);
@@ -15,6 +23,7 @@ export function Signup() {
 
     async function signup(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
+
         const username = usernameRef.current?.value.trim();
         const password = passwordRef.current?.value;
 
@@ -37,13 +46,57 @@ export function Signup() {
 
         try {
             setLoading(true);
-            await axios.post(`${BACKEND_URL}/api/v1/signup`, {
-                username,
-                password,
-            });
+
+            const response = await axios.post<SignupResponse>(
+                `${BACKEND_URL}/api/v1/signup`,
+                {
+                    username,
+                    password,
+                }
+            );
+
+            if (
+                !response.data ||
+                typeof response.data.message !== "string" ||
+                response.data.message.trim().length === 0
+            ) {
+                setError(
+                    "Your account may have been created, but the server returned an unexpected response. Please try signing in."
+                );
+                return;
+            }
+
             navigate("/signin");
-        } catch (error: any) {
-            setError(error.response?.data?.message ?? "Unable to create account");
+        } catch (error: unknown) {
+            if (axios.isAxiosError<SignupErrorResponse>(error)) {
+                const status = error.response?.status;
+                const serverMessage = error.response?.data?.message;
+
+                if (status === 409) {
+                    setError(
+                        serverMessage ||
+                        "This username is already taken. Please choose another."
+                    );
+                } else if (status === 400) {
+                    setError(
+                        serverMessage ||
+                        "Please check your username and password."
+                    );
+                } else if (error.response) {
+                    setError(
+                        serverMessage ||
+                        "Unable to create your account. Please try again."
+                    );
+                } else if (error.request) {
+                    setError(
+                        "Cannot reach the server. Check your connection and try again."
+                    );
+                } else {
+                    setError("Unable to create account. Please try again.");
+                }
+            } else {
+                setError("An unexpected error occurred. Please try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -59,9 +112,14 @@ export function Signup() {
                     <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--purple-600)]">
                         Brainly
                     </p>
-                    <h1 id="signup-title" className="text-2xl font-bold tracking-tight text-[var(--brainly-ink)] sm:text-3xl">
+
+                    <h1
+                        id="signup-title"
+                        className="text-2xl font-bold tracking-tight text-[var(--brainly-ink)] sm:text-3xl"
+                    >
                         Create your account
                     </h1>
+
                     <p className="mt-2 text-sm text-[var(--brainly-muted)]">
                         Keep your useful links, notes, and ideas together.
                     </p>
@@ -76,6 +134,7 @@ export function Signup() {
                         required
                         autoComplete="username"
                     />
+
                     <Input
                         id="signup-password"
                         label="Password"
@@ -87,7 +146,10 @@ export function Signup() {
                     />
 
                     {error && (
-                        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+                        <p
+                            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                            role="alert"
+                        >
                             {error}
                         </p>
                     )}
@@ -103,7 +165,10 @@ export function Signup() {
 
                 <p className="mt-6 text-center text-sm text-[var(--brainly-muted)]">
                     Already have an account?{" "}
-                    <Link className="font-semibold text-[var(--purple-600)] underline-offset-4 hover:underline" to="/signin">
+                    <Link
+                        className="font-semibold text-[var(--purple-600)] underline-offset-4 hover:underline"
+                        to="/signin"
+                    >
                         Sign in
                     </Link>
                 </p>

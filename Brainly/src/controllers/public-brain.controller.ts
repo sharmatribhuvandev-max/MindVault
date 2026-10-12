@@ -14,8 +14,11 @@ export async function getPublicBrain(
     const shareLink = req.params.shareLink;
 
     // Validate the share link before querying MongoDB.
-    if (typeof shareLink !== "string" || shareLink.trim() === "") {
-        return res.status(411).json({
+    if (
+        typeof shareLink !== "string" ||
+        shareLink.trim() === ""
+    ) {
+        return res.status(404).json({
             message: "Sorry incorrect input",
         });
     }
@@ -25,7 +28,7 @@ export async function getPublicBrain(
     });
 
     if (!link) {
-        return res.status(411).json({
+        return res.status(404).json({
             message: "Sorry incorrect input",
         });
     }
@@ -40,7 +43,7 @@ export async function getPublicBrain(
     });
 
     if (!user) {
-        return res.status(411).json({
+        return res.status(404).json({
             message: "User not found",
         });
     }

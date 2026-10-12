@@ -11,7 +11,7 @@ export async function createTag(
     req: Request,
     res: Response
 ) {
-    const name = req.body.name;
+    const { name } = req.body ?? {};
 
     if (
         typeof name !== "string" ||
@@ -55,16 +55,20 @@ export async function createTag(
             message: "Tag created",
             tag,
         });
-    } catch (error: any) {
-        if (error?.code === 11000) {
+    } catch (error: unknown) {
+        if (
+            typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            error.code === 11000
+        ) {
             return res.status(409).json({
                 message: "Tag already exists",
             });
         }
 
-        return res.status(500).json({
-            message: "Failed to create tag",
-        });
+        // Let the centralized Express error handler handle unexpected errors.
+        throw error;
     }
 }
 

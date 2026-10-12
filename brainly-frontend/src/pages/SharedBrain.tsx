@@ -86,15 +86,29 @@ export function SharedBrain() {
                     username: response.data.username,
                     content: response.data.content,
                 });
-            } catch (error) {
-                console.error(
-                    "Failed to fetch shared Brain:",
-                    error
-                );
-                setError("Shared Brain Not Found");
+
+            } catch (error: unknown) {
+                console.error("Failed to fetch shared Brain:", error);
+
+                if (axios.isAxiosError(error)) {
+                    if (error.response?.status === 404) {
+                        setError("Shared Brain Not Found");
+                    } else if (error.response) {
+                        setError("Unable to load shared Brain. Please try again later.");
+                    } else if (error.request) {
+                        setError(
+                            "Unable to connect to the server. Check your connection and try again."
+                        );
+                    } else {
+                        setError("An unexpected error occurred while loading Shared Brain.");
+                    }
+                } else {
+                    setError("An unexpected error occurred while loading Shared Brain.");
+                }
             } finally {
                 setLoading(false);
             }
+
         };
 
         fetchSharedBrain();
@@ -110,22 +124,29 @@ export function SharedBrain() {
         );
     }
 
+
     if (error || !brain) {
+        const isNotFound =
+            !error || error === "Shared Brain Not Found";
+
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
                 <div className="text-center">
                     <h1 className="text-2xl font-semibold text-gray-800">
-                        Shared Brain Not Found
+                        {isNotFound
+                            ? "Shared Brain Not Found"
+                            : "Unable to Load Shared Brain"}
                     </h1>
 
-                    <p className="mt-2 text-gray-500">
-                        This link may be invalid or sharing may have
-                        been disabled.
+                    <p className="mt-2 text-gray-500" role="alert">
+                        {error ||
+                            "This link may be invalid or sharing may have been disabled."}
                     </p>
                 </div>
             </div>
         );
     }
+
 
     return (
         <div className="min-h-screen bg-gray-50 px-6 py-10">
@@ -160,9 +181,9 @@ export function SharedBrain() {
                                     type={item.type}
                                     link={item.link}
                                     title={item.title}
-                                    onDelete={async () => {}}
+                                    onDelete={async () => { }}
                                     isDeleting={false}
-                                    onEdit={() => {}}
+                                    onEdit={() => { }}
                                     isPublic={true}
                                 />
                             ))}

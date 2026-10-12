@@ -1,3 +1,4 @@
+
 import type { Request, Response } from "express";
 import mongoose from "mongoose";
 
@@ -7,16 +8,60 @@ import {
     TagModel,
 } from "../db.js";
 
+// Accept only valid HTTP or HTTPS URLs.
+function isValidHttpUrl(value: unknown): value is string {
+    if (typeof value !== "string" || value.trim() === "") {
+        return false;
+    }
+
+    try {
+        const url = new URL(value.trim());
+
+        return (
+            (url.protocol === "http:" || url.protocol === "https:") &&
+            url.hostname.length > 0
+        );
+    } catch {
+        return false;
+    }
+}
+
 export async function createContent(
     req: Request,
     res: Response
 ) {
-    const link = req.body.link;
-    const type = req.body.type;
-    const title = req.body.title;
-    const tags = req.body.tags;
-    const collectionId = req.body.collectionId;
-    const notes = req.body.notes;
+    const {
+        link,
+        type,
+        title,
+        tags,
+        collectionId,
+        notes,
+    } = req.body ?? {};
+
+    // Validate title
+    if (
+        typeof title !== "string" ||
+        title.trim() === ""
+    ) {
+        return res.status(400).json({
+            message: "Title is required",
+        });
+    }
+
+    // Validate link
+    if (!isValidHttpUrl(link)) {
+        return res.status(400).json({
+            message: "A valid HTTP or HTTPS link is required",
+        });
+    }
+
+    // Validate supported content type
+    if (type !== "youtube" && type !== "twitter") {
+        return res.status(400).json({
+            message: "Content type must be youtube or twitter",
+        });
+    }
 
     // Validate notes
     let validNotes = "";
@@ -116,9 +161,9 @@ export async function createContent(
 
     // Create content
     await ContentModel.create({
-        link,
+        link: link.trim(),
         type,
-        title,
+        title: title.trim(),
         userId,
         tags: tagIds,
         collectionId: validCollectionId,
@@ -129,7 +174,6 @@ export async function createContent(
         message: "Content added",
     });
 }
-
 
 export async function getContent(
     req: Request,
@@ -150,8 +194,6 @@ export async function getContent(
         content,
     });
 }
-
-
 
 export async function updateContent(
     req: Request,
@@ -175,17 +217,26 @@ export async function updateContent(
         tags,
         collectionId,
         notes,
-    } = req.body;
+    } = req.body ?? {};
 
     if (
         typeof title !== "string" ||
-        title.trim() === "" ||
-        typeof link !== "string" ||
-        link.trim() === "" ||
-        (type !== "youtube" && type !== "twitter")
+        title.trim() === ""
     ) {
         return res.status(400).json({
-            message: "Invalid content data",
+            message: "Title is required",
+        });
+    }
+
+    if (!isValidHttpUrl(link)) {
+        return res.status(400).json({
+            message: "A valid HTTP or HTTPS link is required",
+        });
+    }
+
+    if (type !== "youtube" && type !== "twitter") {
+        return res.status(400).json({
+            message: "Content type must be youtube or twitter",
         });
     }
 
@@ -316,8 +367,6 @@ export async function updateContent(
     });
 }
 
-
-
 export async function updateFavorite(
     req: Request,
     res: Response
@@ -333,7 +382,7 @@ export async function updateFavorite(
         });
     }
 
-    const { isFavorite } = req.body;
+    const { isFavorite } = req.body ?? {};
 
     if (typeof isFavorite !== "boolean") {
         return res.status(400).json({
@@ -390,7 +439,7 @@ export async function updatePin(
         });
     }
 
-    const { isPinned } = req.body;
+    const { isPinned } = req.body ?? {};
 
     if (typeof isPinned !== "boolean") {
         return res.status(400).json({
@@ -432,22 +481,35 @@ export async function updatePin(
     });
 }
 
-
-
 export async function deleteContent(
     req: Request,
     res: Response
 ) {
-    const contentId = req.body.contentId;
+    const contentId = req.body?.contentId;
+
+    if (
+        typeof contentId !== "string" ||
+        !mongoose.Types.ObjectId.isValid(contentId)
+    ) {
+        return res.status(400).json({
+            message: "Invalid content ID",
+        });
+    }
 
     const userId = new mongoose.Types.ObjectId(
         req.userId!
     );
 
-    await ContentModel.deleteOne({
+    const result = await ContentModel.deleteOne({
         _id: contentId,
         userId,
     });
+
+    if (result.deletedCount === 0) {
+        return res.status(404).json({
+            message: "Content not found",
+        });
+    }
 
     return res.json({
         message: "Deleted",

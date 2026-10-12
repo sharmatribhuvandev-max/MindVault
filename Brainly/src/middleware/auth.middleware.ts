@@ -1,5 +1,13 @@
-import type { NextFunction, Request, Response } from "express";
+
+import type {
+    NextFunction,
+    Request,
+    Response,
+} from "express";
+
 import jwt, { type JwtPayload } from "jsonwebtoken";
+import mongoose from "mongoose";
+
 import { JWT_PASSWORD } from "../config.js";
 
 export const userMiddleware = (
@@ -16,33 +24,34 @@ export const userMiddleware = (
             });
         }
 
-        const [scheme, token] = authorization.split(" ");
+        const parts = authorization.split(" ");
 
-        if (scheme !== "Bearer" || !token) {
+        if (
+            parts.length !== 2 ||
+            parts[0] !== "Bearer" ||
+            !parts[1]
+        ) {
             return res.status(401).json({
                 message: "Invalid authorization format",
             });
         }
 
+        const token = parts[1];
         const decoded = jwt.verify(token, JWT_PASSWORD);
 
-        if (typeof decoded === "string") {
-            return res.status(401).json({
-                message: "Invalid token",
-            });
-        }
-
-        const payload = decoded as JwtPayload;
-
-        if (!payload.id) {
+        if (
+            typeof decoded === "string" ||
+            typeof decoded.id !== "string" ||
+            !mongoose.Types.ObjectId.isValid(decoded.id)
+        ) {
             return res.status(401).json({
                 message: "Invalid token payload",
             });
         }
 
-        req.userId = payload.id;
+        req.userId = decoded.id;
 
-        next();
+        return next();
     } catch {
         return res.status(401).json({
             message: "Invalid or expired token",

@@ -99,8 +99,7 @@ export default function Dashboard() {
         setDeletingCollectionId,
     ] = useState<string | null>(null);
 
-    const { contents, refresh } = useContent();
-
+    const { contents, refresh, error: contentError } = useContent();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -834,57 +833,66 @@ export default function Dashboard() {
                         </div>
 
                         <div className="dashboard-actions">
-                        <Button
-                            onClick={() => {
-                                setEditingContent(
-                                    null
-                                );
-
-                                setModalOpen(true);
-                            }}
-                            size="md"
-                            variant="primary"
-                            text="Add Content"
-                            startIcon={
-                                <PlusIcon />
-                            }
-                        />
-
-                        {sharingEnabled ? (
                             <Button
-                                onClick={
-                                    disableSharing
-                                }
-                                variant="secondary"
-                                text="Disable Sharing"
+                                onClick={() => {
+                                    setEditingContent(
+                                        null
+                                    );
+
+                                    setModalOpen(true);
+                                }}
+                                size="md"
+                                variant="primary"
+                                text="Add Content"
                                 startIcon={
-                                    <ShareIcon />
+                                    <PlusIcon />
                                 }
                             />
-                        ) : (
-                            <Button
-                                onClick={
-                                    createShareLink
-                                }
-                                variant="secondary"
-                                text="Share Brain"
-                                startIcon={
-                                    <ShareIcon />
-                                }
-                            />
-                        )}
 
-                        <Button
-                            onClick={logout}
-                            variant="secondary"
-                            text="Logout"
-                        />
+                            {sharingEnabled ? (
+                                <Button
+                                    onClick={
+                                        disableSharing
+                                    }
+                                    variant="secondary"
+                                    text="Disable Sharing"
+                                    startIcon={
+                                        <ShareIcon />
+                                    }
+                                />
+                            ) : (
+                                <Button
+                                    onClick={
+                                        createShareLink
+                                    }
+                                    variant="secondary"
+                                    text="Share Brain"
+                                    startIcon={
+                                        <ShareIcon />
+                                    }
+                                />
+                            )}
+
+                            <Button
+                                onClick={logout}
+                                variant="secondary"
+                                text="Logout"
+                            />
                         </div>
                     </header>
 
                     {deleteError && (
                         <div className="dashboard-feedback mt-4 border border-red-300 bg-red-50 text-red-700">
                             {deleteError}
+                        </div>
+                    )}
+                    {contentError && (
+                        <div
+                            className="dashboard-feedback mt-4 border border-red-300 bg-red-50 text-red-700"
+                            role="alert"
+                            aria-live="polite"
+                        >
+                            {contentError}
                         </div>
                     )}
 

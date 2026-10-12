@@ -1,3 +1,4 @@
+
 import axios from "axios";
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,6 +16,7 @@ export function Signin() {
 
     async function signin(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
+
         const username = usernameRef.current?.value.trim();
         const password = passwordRef.current?.value;
 
@@ -25,18 +27,49 @@ export function Signin() {
             return;
         }
 
+        if (username.length < 3 || username.length > 30) {
+            setError("Username must be between 3 and 30 characters");
+            return;
+        }
+
+        if (password.length < 8) {
+            setError("Password must be at least 8 characters long");
+            return;
+        }
+
         try {
             setLoading(true);
-            const response = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
+
+            const response = await axios.post<{
+                token?: unknown;
+            }>(`${BACKEND_URL}/api/v1/signin`, {
                 username,
                 password,
             });
 
-            const token = response.data.token;
+            const token = response.data?.token;
+
+            if (typeof token !== "string" || token.trim() === "") {
+                setError("Invalid response from server. Please try again.");
+                return;
+            }
+
             localStorage.setItem("token", token);
             navigate("/dashboard");
-        } catch (error: any) {
-            setError(error.response?.data?.message ?? "Unable to sign in");
+        } catch (error: unknown) {
+            if (axios.isAxiosError<{ message?: string }>(error)) {
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    setError("Incorrect username or password");
+                } else if (error.response?.data?.message) {
+                    setError(error.response.data.message);
+                } else if (error.response) {
+                    setError("Unable to sign in. Please try again.");
+                } else {
+                    setError("Cannot connect to the server. Check that the backend is running.");
+                }
+            } else {
+                setError("An unexpected error occurred. Please try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -52,7 +85,10 @@ export function Signin() {
                     <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--purple-600)]">
                         Brainly
                     </p>
-                    <h1 id="signin-title" className="text-2xl font-bold tracking-tight text-[var(--brainly-ink)] sm:text-3xl">
+                    <h1
+                        id="signin-title"
+                        className="text-2xl font-bold tracking-tight text-[var(--brainly-ink)] sm:text-3xl"
+                    >
                         Welcome back
                     </h1>
                     <p className="mt-2 text-sm text-[var(--brainly-muted)]">
@@ -80,7 +116,10 @@ export function Signin() {
                     />
 
                     {error && (
-                        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+                        <p
+                            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                            role="alert"
+                        >
                             {error}
                         </p>
                     )}
@@ -96,7 +135,10 @@ export function Signin() {
 
                 <p className="mt-6 text-center text-sm text-[var(--brainly-muted)]">
                     Don&apos;t have an account?{" "}
-                    <Link className="font-semibold text-[var(--purple-600)] underline-offset-4 hover:underline" to="/signup">
+                    <Link
+                        className="font-semibold text-[var(--purple-600)] underline-offset-4 hover:underline"
+                        to="/signup"
+                    >
                         Create one
                     </Link>
                 </p>

@@ -25,6 +25,7 @@ const ContentSchema = new Schema(
         type: {
             type: String,
             required: true,
+            enum: ["youtube", "twitter"],
         },
 
         userId: {
