@@ -7,9 +7,7 @@
   "scripts": {
     "build": "tsc -b",
     "start": "node dist/server.js",
-    "dev": "npm run build && npm run start",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "dev": "npm run build && npm run start"
   },
   "keywords": [],
   "author": "",
@@ -28,9 +26,6 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/supertest": "^7.2.1",
-    "supertest": "^7.3.1",
-    "ts-node-dev": "^2.0.0",
-    "vitest": "^5.0.4"
+    "ts-node-dev": "^2.0.0"
   }
 }
