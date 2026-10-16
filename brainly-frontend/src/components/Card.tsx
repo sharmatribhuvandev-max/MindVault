@@ -32,14 +32,36 @@ interface CardProps {
     isPublic?: boolean;
 }
 
-function getYouTubeEmbedUrl(url: string) {
+function getYouTubeEmbedUrl(url: string): string | null {
     try {
         const parsedUrl = new URL(url);
+        let videoId: string | null = null;
 
-        const videoId =
-            parsedUrl.searchParams.get("v");
+        if (
+            parsedUrl.hostname === "youtu.be" ||
+            parsedUrl.hostname === "www.youtu.be"
+        ) {
+            videoId = parsedUrl.pathname.split("/")[1] || null;
+        } else if (
+            [
+                "youtube.com",
+                "www.youtube.com",
+                "m.youtube.com",
+                "music.youtube.com",
+            ].includes(parsedUrl.hostname)
+        ) {
+            if (parsedUrl.pathname === "/watch") {
+                videoId = parsedUrl.searchParams.get("v");
+            } else {
+                const match = parsedUrl.pathname.match(
+                    /^\/(embed|shorts|live)\/([^/]+)/
+                );
 
-        if (!videoId) {
+                videoId = match?.[2] ?? null;
+            }
+        }
+
+        if (!videoId || !/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
             return null;
         }
 
