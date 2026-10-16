@@ -4,3 +4,6 @@
 **/.env.*
 !**/.env.example
 *.log
+
+# TypeScript incremental build metadata
+/Brainly/tsconfig.tsbuildinfo

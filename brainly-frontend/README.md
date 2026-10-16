@@ -1,73 +1,55 @@
-# React + TypeScript + Vite
+# Brainly frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript frontend for the Brainly personal knowledge dashboard. It is built with Vite and uses React Router for client-side navigation and Axios to call the Express API.
 
-Currently, two official plugins are available:
+Production frontend: <https://brainly-ruddy.vercel.app>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Requirements
 
-## React Compiler
+- Node.js compatible with the versions in `package.json`.
+- npm.
+- The Brainly backend running locally or deployed.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Setup
 
-## Expanding the ESLint configuration
+From this directory:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```powershell
+npm install
+Copy-Item .env.example .env.local
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Set the API origin in `.env.local`:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```dotenv
+VITE_API_URL=http://localhost:3000
 ```
+
+`VITE_API_URL` is the backend origin only. The frontend adds `/api/v1` to API requests. For production, set `VITE_API_URL` to the deployed backend origin in the Vercel project's environment variables and redeploy.
+
+Start the development server:
+
+```powershell
+npm run dev
+```
+
+## Scripts
+
+- `npm run dev` — start Vite development server.
+- `npm run build` — run TypeScript project builds and create the production bundle.
+- `npm test` — run `vitest run`; ensure Vitest is declared and installed for clean installs.
+- `npm run test:watch` — run Vitest in watch mode.
+- `npm run lint` — run ESLint.
+- `npm run preview` — locally preview the production build.
+
+## Routes
+
+- `/signin` — sign in.
+- `/signup` — create an account.
+- `/dashboard` — authenticated dashboard.
+- `/share/:hash` — public shared Brain page.
+- `/` redirects to `/signin`.
+
+Vercel's `vercel.json` rewrites client-side paths to `index.html` so React Router can resolve these routes on refresh.
+
+For full project setup, backend configuration, architecture, and API details, see the root [README](../README.md) and [documentation](../docs/).
