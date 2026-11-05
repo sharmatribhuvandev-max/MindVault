@@ -1,11 +1,16 @@
 
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { BACKEND_URL } from "../config";
+import type { Content } from "../types";
 
+/**
+ * Holds the signed-in user's content. Call `refresh()` to load it;
+ * the consuming component decides when (e.g. on mount).
+ */
 export function useContent() {
-    const [contents, setContents] = useState<any[]>([]);
+    const [contents, setContents] = useState<Content[]>([]);
     const [error, setError] = useState("");
 
     const refresh = useCallback(async () => {
@@ -60,10 +65,6 @@ export function useContent() {
             }
         }
     }, []);
-
-    useEffect(() => {
-        void refresh();
-    }, [refresh]);
 
     return {
         contents,

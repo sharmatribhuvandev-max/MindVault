@@ -5,6 +5,10 @@ import userEvent from '@testing-library/user-event'
 import axios from 'axios'
 import Dashboard from '../pages/dashboard'
 import { useContent } from '../hooks/useContent'
+import type { ComponentProps } from 'react'
+import type { Sidebar } from '../components/Sidebar'
+import type { Card } from '../components/Card'
+import type { CreateContentModal } from '../components/CreateContentModal'
 
 const { mockNavigate } = vi.hoisted(() => ({
     mockNavigate: vi.fn(),
@@ -42,11 +46,11 @@ vi.mock('../components/Sidebar', () => ({
         onSelectCollection,
         selectedCollectionId,
         isOpen,
-    }: any) => (
+    }: ComponentProps<typeof Sidebar>) => (
         <aside data-testid="sidebar" data-open={String(isOpen)}>
             <button onClick={() => onSelectType('favorites')}>Sidebar Favorites</button>
             <button onClick={() => onSelectType('pinned')}>Sidebar Pinned</button>
-            {collections.map((collection: any) => (
+            {collections.map((collection) => (
                 <button
                     key={collection._id}
                     aria-pressed={selectedCollectionId === collection._id}
@@ -69,13 +73,13 @@ vi.mock('../components/Card', () => ({
         onEdit,
         isFavorite,
         isPinned,
-    }: any) => (
+    }: ComponentProps<typeof Card>) => (
         <article data-testid="content-card">
             <h2>{title}</h2>
-            <button onClick={() => onFavorite(id, !isFavorite)}>
+            <button onClick={() => onFavorite?.(id, !isFavorite)}>
                 Toggle favorite {title}
             </button>
-            <button onClick={() => onPin(id, !isPinned)}>
+            <button onClick={() => onPin?.(id, !isPinned)}>
                 Toggle pin {title}
             </button>
             <button onClick={() => onEdit(id)}>Edit {title}</button>
@@ -85,7 +89,7 @@ vi.mock('../components/Card', () => ({
 }))
 
 vi.mock('../components/CreateContentModal', () => ({
-    CreateContentModal: ({ open, onClose, editContent }: any) =>
+    CreateContentModal: ({ open, onClose, editContent }: ComponentProps<typeof CreateContentModal>) =>
         open ? (
             <div role="dialog" aria-label={editContent ? 'Edit Content' : 'Add Content'}>
                 <span>{editContent?.title ?? 'New content form'}</span>
@@ -145,18 +149,18 @@ beforeEach(() => {
         contents: currentContents,
         refresh: mockRefresh,
         error: currentError,
-    } as any)
+    } as never)
 
     vi.mocked(axios.get).mockResolvedValue({
         data: { collections: sampleCollections },
-    } as any)
+    } as never)
 
     vi.mocked(axios.post).mockResolvedValue({
         data: { hash: 'share123' },
-    } as any)
+    } as never)
 
-    vi.mocked(axios.patch).mockResolvedValue({ data: {} } as any)
-    vi.mocked(axios.delete).mockResolvedValue({ data: {} } as any)
+    vi.mocked(axios.patch).mockResolvedValue({ data: {} } as never)
+    vi.mocked(axios.delete).mockResolvedValue({ data: {} } as never)
 
     vi.mocked(axios.isAxiosError).mockReturnValue(false)
 })
@@ -237,7 +241,7 @@ describe('Dashboard component', () => {
             contents: [],
             refresh: mockRefresh,
             error: null,
-        } as any)
+        } as never)
 
         render(<Dashboard />)
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import "../App.css";
 
@@ -19,41 +19,17 @@ import { BACKEND_URL } from "../config";
 
 import { useNavigate } from "react-router-dom";
 
-type ContentType = "twitter" | "youtube";
+import type {
+    Collection,
+    Content,
+    ContentType,
+} from "../types";
 
 type ContentFilter =
     | "all"
     | "favorites"
     | "pinned"
     | ContentType;
-
-interface Tag {
-    _id: string;
-    name: string;
-}
-
-interface Collection {
-    _id: string;
-    name: string;
-}
-
-interface Content {
-    _id: string;
-    title: string;
-    link: string;
-    type: ContentType;
-    tags: Tag[];
-    isFavorite: boolean;
-    isPinned: boolean;
-    notes?: string;
-    collectionId:
-    | string
-    | {
-        _id: string;
-        name: string;
-    }
-    | null;
-}
 
 export default function Dashboard() {
     const [modalOpen, setModalOpen] =
@@ -102,17 +78,13 @@ export default function Dashboard() {
     const { contents, refresh, error: contentError } = useContent();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        refresh();
-        fetchCollections();
-    }, [modalOpen]);
-
-    async function fetchCollections() {
+    // Returns the user's collections, or null on failure.
+    const loadCollections = useCallback(async (): Promise<Collection[] | null> => {
         const token =
             localStorage.getItem("token");
 
         if (!token) {
-            return;
+            return null;
         }
 
         try {
@@ -126,9 +98,7 @@ export default function Dashboard() {
                 }
             );
 
-            setCollections(
-                response.data.collections || []
-            );
+            return response.data.collections || [];
         } catch (error) {
             console.error(
                 "Failed to fetch collections:",
@@ -142,8 +112,35 @@ export default function Dashboard() {
                 localStorage.removeItem("token");
                 navigate("/signin");
             }
+
+            return null;
+        }
+    }, [navigate]);
+
+    async function fetchCollections() {
+        const loaded = await loadCollections();
+
+        if (loaded) {
+            setCollections(loaded);
         }
     }
+
+    // Load on mount, and reload whenever the content modal opens or
+    // closes so newly created tags/collections/content are picked up.
+    useEffect(() => {
+        let ignore = false;
+
+        void refresh();
+        void loadCollections().then((loaded) => {
+            if (!ignore && loaded) {
+                setCollections(loaded);
+            }
+        });
+
+        return () => {
+            ignore = true;
+        };
+    }, [modalOpen, refresh, loadCollections]);
 
     const filteredContents = useMemo(() => {
         const query =

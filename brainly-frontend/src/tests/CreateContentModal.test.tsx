@@ -116,6 +116,46 @@ describe('CreateContentModal component', () => {
     )
   })
 
+  it('keeps typed edits when the parent re-renders with an equal editContent object', async () => {
+    const makeEdit = () => ({
+      id: 'content-1',
+      title: 'Original title',
+      link: 'https://youtu.be/abc',
+      type: 'youtube' as const,
+      tags: [],
+      notes: '',
+      collectionId: null,
+    })
+
+    const { rerender } = render(
+      <CreateContentModal open onClose={vi.fn()} editContent={makeEdit()} />
+    )
+
+    const titleInput = screen.getByPlaceholderText('Title')
+    await userEvent.clear(titleInput)
+    await userEvent.type(titleInput, 'Edited title')
+
+    // Dashboard builds a new editContent object on every render.
+    rerender(
+      <CreateContentModal open onClose={vi.fn()} editContent={makeEdit()} />
+    )
+
+    expect(screen.getByPlaceholderText('Title')).toHaveValue('Edited title')
+  })
+
+  it('starts from a blank form after closing and reopening', async () => {
+    const { rerender } = render(
+      <CreateContentModal open onClose={vi.fn()} />
+    )
+
+    await userEvent.type(screen.getByPlaceholderText('Title'), 'Draft')
+
+    rerender(<CreateContentModal open={false} onClose={vi.fn()} />)
+    rerender(<CreateContentModal open onClose={vi.fn()} />)
+
+    expect(screen.getByPlaceholderText('Title')).toHaveValue('')
+  })
+
   it('shows a validation error when title and link are empty', async () => {
     render(
       <CreateContentModal

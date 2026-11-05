@@ -39,7 +39,72 @@ interface CreateContentModalProps {
     onUpdated?: () => Promise<void> | void;
 }
 
-export function CreateContentModal({
+type LoadResult<T> =
+    | { ok: true; data: T[] }
+    | { ok: false; error: string };
+
+// Fetches GET /api/v1/<resource>, which responds with { <resource>: [...] }.
+async function loadList<T>(
+    resource: "tags" | "collections"
+): Promise<LoadResult<T>> {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        return { ok: false, error: "You are not authenticated." };
+    }
+
+    try {
+        const response = await axios.get(
+            `${BACKEND_URL}/api/v1/${resource}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return { ok: true, data: response.data[resource] || [] };
+    } catch (error) {
+        console.error(`Failed to fetch ${resource}:`, error);
+
+        if (axios.isAxiosError(error)) {
+            if (error.response?.status === 401) {
+                return {
+                    ok: false,
+                    error: "Your session has expired. Please sign in again.",
+                };
+            }
+
+            return {
+                ok: false,
+                error:
+                    error.response?.data?.message ||
+                    `Failed to load ${resource}.`,
+            };
+        }
+
+        return { ok: false, error: `Failed to load ${resource}.` };
+    }
+}
+
+export function CreateContentModal(
+    props: CreateContentModalProps
+) {
+    if (!props.open) {
+        return <div />;
+    }
+
+    // Mount a fresh form on every open, and whenever a different item
+    // is edited, so form state always starts from `editContent`.
+    return (
+        <ContentModalForm
+            key={props.editContent?.id ?? "new"}
+            {...props}
+        />
+    );
+}
+
+function ContentModalForm({
     open,
     onClose,
     editContent = null,
@@ -47,19 +112,26 @@ export function CreateContentModal({
 }: CreateContentModalProps) {
     const titleInputRef = useRef<HTMLInputElement>(null);
 
-    const [title, setTitle] = useState("");
+    const [title, setTitle] = useState(
+        editContent?.title ?? ""
+    );
 
-    const [link, setLink] = useState("");
+    const [link, setLink] = useState(
+        editContent?.link ?? ""
+    );
 
-    const [notes, setNotes] = useState("");
+    const [notes, setNotes] = useState(
+        editContent?.notes || ""
+    );
 
-    const [type, setType] =
-        useState<ContentType>("youtube");
+    const [type, setType] = useState<ContentType>(
+        editContent?.type ?? "youtube"
+    );
 
     const [tags, setTags] = useState<Tag[]>([]);
 
     const [selectedTags, setSelectedTags] =
-        useState<Tag[]>([]);
+        useState<Tag[]>(editContent?.tags || []);
 
     const [selectedTagId, setSelectedTagId] =
         useState("");
@@ -68,7 +140,7 @@ export function CreateContentModal({
         useState<Collection[]>([]);
 
     const [selectedCollectionId, setSelectedCollectionId] =
-        useState("");
+        useState(editContent?.collectionId || "");
 
     const [newCollectionName, setNewCollectionName] =
         useState("");
@@ -113,165 +185,26 @@ export function CreateContentModal({
         return () => document.removeEventListener("keydown", handleKeyDown);
     }, [open, loading, tagLoading, collectionLoading, onClose]);
 
+    // Load the user's tags and collections when the form mounts.
     useEffect(() => {
-        if (!open) {
-            return;
-        }
+        let ignore = false;
 
-        if (editContent) {
-            setTitle(editContent.title);
+        void loadList<Tag>("tags").then((result) => {
+            if (ignore) return;
+            if (result.ok) setTags(result.data);
+            else setTagError(result.error);
+        });
 
-            setLink(editContent.link);
+        void loadList<Collection>("collections").then((result) => {
+            if (ignore) return;
+            if (result.ok) setCollections(result.data);
+            else setCollectionError(result.error);
+        });
 
-            setNotes(editContent.notes || "");
-
-            setType(editContent.type);
-
-            setSelectedTags(editContent.tags || []);
-
-            setSelectedCollectionId(
-                editContent.collectionId || ""
-            );
-        } else {
-            setTitle("");
-
-            setLink("");
-
-            setNotes("");
-
-            setType("youtube");
-
-            setSelectedTags([]);
-
-            setSelectedCollectionId("");
-        }
-
-        setSelectedTagId("");
-
-        setNewTagName("");
-
-        setShowNewTagInput(false);
-
-        setNewCollectionName("");
-
-        setShowNewCollectionInput(false);
-
-        setError("");
-
-        setTagError("");
-
-        setCollectionError("");
-
-        setLoading(false);
-
-        setTagLoading(false);
-
-        setCollectionLoading(false);
-    }, [open, editContent]);
-
-    useEffect(() => {
-        if (!open) {
-            return;
-        }
-
-        fetchTags();
-
-        fetchCollections();
-    }, [open]);
-
-    async function fetchTags() {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-            setTagError("You are not authenticated.");
-            return;
-        }
-
-        try {
-            const response = await axios.get(
-                `${BACKEND_URL}/api/v1/tags`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            setTags(response.data.tags || []);
-        } catch (error) {
-            console.error(
-                "Failed to fetch tags:",
-                error
-            );
-
-            if (axios.isAxiosError(error)) {
-                if (
-                    error.response?.status === 401
-                ) {
-                    setTagError(
-                        "Your session has expired. Please sign in again."
-                    );
-                } else {
-                    setTagError(
-                        error.response?.data?.message ||
-                        "Failed to load tags."
-                    );
-                }
-            } else {
-                setTagError("Failed to load tags.");
-            }
-        }
-    }
-
-    async function fetchCollections() {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-            setCollectionError(
-                "You are not authenticated."
-            );
-            return;
-        }
-
-        try {
-            const response = await axios.get(
-                `${BACKEND_URL}/api/v1/collections`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            setCollections(
-                response.data.collections || []
-            );
-        } catch (error) {
-            console.error(
-                "Failed to fetch collections:",
-                error
-            );
-
-            if (axios.isAxiosError(error)) {
-                if (
-                    error.response?.status === 401
-                ) {
-                    setCollectionError(
-                        "Your session has expired. Please sign in again."
-                    );
-                } else {
-                    setCollectionError(
-                        error.response?.data?.message ||
-                        "Failed to load collections."
-                    );
-                }
-            } else {
-                setCollectionError(
-                    "Failed to load collections."
-                );
-            }
-        }
-    }
+        return () => {
+            ignore = true;
+        };
+    }, []);
 
     async function createNewCollection() {
         const trimmedName =
