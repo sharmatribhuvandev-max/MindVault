@@ -86,13 +86,12 @@ Vite normally serves the frontend at `http://localhost:5173`. The frontend appen
 | `Brainly/` | `npm run build` | Compile/check backend TypeScript |
 | `Brainly/` | `npm start` | Start compiled backend |
 | `Brainly/` | `npm run dev` | Build then start backend |
+| `Brainly/` | `npm test` | Run backend API tests (Vitest + Supertest, models mocked; no MongoDB needed) |
 | `brainly-frontend/` | `npm run dev` | Start Vite development server |
 | `brainly-frontend/` | `npm run build` | Type-check and build frontend |
-| `brainly-frontend/` | `npm test` | Run the configured Vitest command, if Vitest is installed |
+| `brainly-frontend/` | `npm test` | Run frontend component tests (Vitest + Testing Library, jsdom) |
 | `brainly-frontend/` | `npm run lint` | Run ESLint |
 | `brainly-frontend/` | `npm run preview` | Preview the production frontend build |
-
-The backend package currently has no test script. Confirm the frontend test dependencies are declared in `package.json` before relying on tests in a fresh checkout; a script entry alone does not install Vitest.
 
 ## Configuration and secrets
 
