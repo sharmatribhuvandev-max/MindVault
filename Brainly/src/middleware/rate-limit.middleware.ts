@@ -1,0 +1,34 @@
+import { rateLimit } from "express-rate-limit";
+
+const FIFTEEN_MINUTES = 15 * 60 * 1000;
+const ONE_HOUR = 60 * 60 * 1000;
+
+/**
+ * Limits failed sign-in attempts per IP to slow password guessing.
+ * Successful sign-ins do not count toward the limit.
+ */
+export const signinLimiter = rateLimit({
+    windowMs: FIFTEEN_MINUTES,
+    limit: 10,
+    skipSuccessfulRequests: true,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message:
+            "Too many failed sign-in attempts. Please try again in 15 minutes.",
+    },
+});
+
+/**
+ * Limits account creation per IP to curb automated sign-ups.
+ */
+export const signupLimiter = rateLimit({
+    windowMs: ONE_HOUR,
+    limit: 10,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message:
+            "Too many accounts created from this network. Please try again later.",
+    },
+});
