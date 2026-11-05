@@ -107,6 +107,8 @@ See [Deployment and environment configuration](docs/DEPLOYMENT.md). Never commit
 
 - Authenticated API routes require a bearer token in the `Authorization` header.
 - JWTs currently expire after one hour; sign in again when a token expires.
+- Sign-in (10 failed attempts per 15 minutes) and sign-up (10 per hour) are rate-limited per IP. Behind a reverse proxy, `TRUST_PROXY` must match the number of proxy hops (see [Deployment](docs/DEPLOYMENT.md)).
+- Public share links use 10-character random hashes generated with a cryptographically secure RNG.
 - The public sharing endpoint omits the `notes` field from shared content.
 - A share link exposes all of the account’s saved content to anyone who has the URL, except private notes, which the public API excludes. Disable sharing to revoke the generated link.
 - Use HTTPS in production and keep production secrets in the hosting provider's environment-variable settings.

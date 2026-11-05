@@ -13,6 +13,7 @@ The current deployment setup uses Vercel for the frontend and a separately hoste
 | `MONGO_URI` | MongoDB connection string; required in production | `mongodb://localhost:27017/brainly` |
 | `JWT_SECRET` | Required; use a strong, random secret | `replace_with_a_random_secret` (placeholder only; replace it) |
 | `FRONTEND_URL` | Allowed frontend origin for CORS; required in production | `http://localhost:5173` |
+| `TRUST_PROXY` | Optional; number of reverse proxies in front of the API, used so rate limiting sees real client IPs. Defaults to `1` in production (correct for Render) and `0` otherwise | unset |
 
 `Brainly/src/config.ts` throws during startup if `JWT_SECRET` is missing, and in production if `MONGO_URI` or `FRONTEND_URL` is missing.
 

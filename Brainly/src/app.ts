@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import type { ErrorRequestHandler } from "express";
 
-import { FRONTEND_URL } from "./config.js";
+import { FRONTEND_URL, TRUST_PROXY } from "./config.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import tagRoutes from "./routes/tag.routes.js";
@@ -13,6 +13,8 @@ import shareRoutes from "./routes/share.routes.js";
 import publicBrainRoutes from "./routes/public-brain.routes.js";
 
 const app = express();
+
+app.set("trust proxy", TRUST_PROXY);
 
 // Middleware
 app.use(express.json());
