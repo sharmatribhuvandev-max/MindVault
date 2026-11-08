@@ -1,4 +1,4 @@
-# Brainly API reference
+# Mind Vault API reference
 
 Base URL: `{BACKEND_ORIGIN}/api/v1` (for local development, `http://localhost:3000/api/v1`). Send JSON request bodies with `Content-Type: application/json` where applicable.
 

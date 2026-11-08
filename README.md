@@ -1,6 +1,6 @@
-# Brainly
+# Mind Vault
 
-Brainly is a full-stack personal knowledge dashboard for saving useful links, organizing them with tags and collections, marking content as favorite or pinned, adding private notes, and sharing a public view of your saved content.
+Mind Vault is a full-stack personal knowledge dashboard for saving useful links, organizing them with tags and collections, marking content as favorite or pinned, adding private notes, and sharing a public view of your saved content.
 
 Live frontend: <https://brainly-ruddy.vercel.app>
 
@@ -8,8 +8,8 @@ Live frontend: <https://brainly-ruddy.vercel.app>
 
 ```text
 .
-├── Brainly/                 # Express + TypeScript API and MongoDB models
-├── brainly-frontend/        # React + TypeScript + Vite frontend
+├── mindvault-backend/       # Express + TypeScript API and MongoDB models
+├── mindvault-frontend/      # React + TypeScript + Vite frontend
 ├── docs/
 │   ├── ARCHITECTURE.md      # Components and request/data flow
 │   ├── API.md               # API routes and request bodies
@@ -47,12 +47,12 @@ Live frontend: <https://brainly-ruddy.vercel.app>
 ### 1. Backend
 
 ```powershell
-cd Brainly
+cd mindvault-backend
 npm install
 Copy-Item .env.example .env
 ```
 
-Edit `Brainly/.env` with local values. At minimum, set `JWT_SECRET` to a strong random secret. For local MongoDB, the example URI is `mongodb://localhost:27017/brainly`.
+Edit `mindvault-backend/.env` with local values. At minimum, set `JWT_SECRET` to a strong random secret. For local MongoDB, the example URI is `mongodb://localhost:27017/mindvault`.
 
 ```powershell
 npm run build
@@ -66,12 +66,12 @@ The API listens on `http://localhost:3000` by default. `npm run dev` currently b
 Open a second PowerShell window:
 
 ```powershell
-cd brainly-frontend
+cd mindvault-frontend
 npm install
 Copy-Item .env.example .env.local
 ```
 
-Set `VITE_API_URL=http://localhost:3000` in `brainly-frontend/.env.local`, then run:
+Set `VITE_API_URL=http://localhost:3000` in `mindvault-frontend/.env.local`, then run:
 
 ```powershell
 npm run dev
@@ -83,15 +83,15 @@ Vite normally serves the frontend at `http://localhost:5173`. The frontend appen
 
 | Location | Command | Purpose |
 |---|---|---|
-| `Brainly/` | `npm run build` | Compile/check backend TypeScript |
-| `Brainly/` | `npm start` | Start compiled backend |
-| `Brainly/` | `npm run dev` | Build then start backend |
-| `Brainly/` | `npm test` | Run backend API tests (Vitest + Supertest, models mocked; no MongoDB needed) |
-| `brainly-frontend/` | `npm run dev` | Start Vite development server |
-| `brainly-frontend/` | `npm run build` | Type-check and build frontend |
-| `brainly-frontend/` | `npm test` | Run frontend component tests (Vitest + Testing Library, jsdom) |
-| `brainly-frontend/` | `npm run lint` | Run ESLint |
-| `brainly-frontend/` | `npm run preview` | Preview the production frontend build |
+| `mindvault-backend/` | `npm run build` | Compile/check backend TypeScript |
+| `mindvault-backend/` | `npm start` | Start compiled backend |
+| `mindvault-backend/` | `npm run dev` | Build then start backend |
+| `mindvault-backend/` | `npm test` | Run backend API tests (Vitest + Supertest, models mocked; no MongoDB needed) |
+| `mindvault-frontend/` | `npm run dev` | Start Vite development server |
+| `mindvault-frontend/` | `npm run build` | Type-check and build frontend |
+| `mindvault-frontend/` | `npm test` | Run frontend component tests (Vitest + Testing Library, jsdom) |
+| `mindvault-frontend/` | `npm run lint` | Run ESLint |
+| `mindvault-frontend/` | `npm run preview` | Preview the production frontend build |
 
 ## Configuration and secrets
 
