@@ -1,6 +1,6 @@
 # Deployment and environment configuration
 
-The current deployment setup uses Vercel for the frontend and a separately hosted Node.js backend (the existing setup uses Render). The frontend URL is `https://brainly-ruddy.vercel.app`. Do not add production secrets to this document or commit real `.env` files.
+The current deployment setup uses Vercel for the frontend and a separately hosted Node.js backend (the existing setup uses Render). The frontend URL is `https://mindvault-ruddy.vercel.app`. Do not add production secrets to this document or commit real `.env` files.
 
 ## Environment variables
 
@@ -39,7 +39,7 @@ Do not include `/api/v1` in `VITE_API_URL`, or the frontend would append it a se
 2. Install dependencies with `npm install` (or the provider's standard install step).
 3. Build with `npm run build`.
 4. Start with `npm start`.
-5. Configure `NODE_ENV=production`, `MONGO_URI`, `JWT_SECRET`, and `FRONTEND_URL`; set `PORT` only if the platform requires/configures it. `FRONTEND_URL` should be the frontend origin, for example `https://brainly-ruddy.vercel.app`, without a path.
+5. Configure `NODE_ENV=production`, `MONGO_URI`, `JWT_SECRET`, and `FRONTEND_URL`; set `PORT` only if the platform requires/configures it. `FRONTEND_URL` should be the frontend origin, for example `https://mindvault-ruddy.vercel.app`, without a path.
 6. Confirm the database allows network access from the backend host and credentials are stored only in provider environment settings.
 
 The backend's source starts the listener after a successful MongoDB connection. No dedicated health-check route was found in the audited route configuration; do not configure a health-check path unless one is added and verified.
