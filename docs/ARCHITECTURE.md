@@ -1,12 +1,12 @@
-# Brainly architecture
+# Mind Vault architecture
 
 ## High-level structure
 
 ```text
 Browser
-  └── React + TypeScript + Vite (brainly-frontend/)
+  └── React + TypeScript + Vite (mindvault-frontend/)
        └── Axios requests to {VITE_API_URL}/api/v1
-            └── Express + TypeScript API (Brainly/)
+            └── Express + TypeScript API (mindvault-backend/)
                  ├── Authentication middleware (protected routes)
                  ├── Route modules and controllers
                  ├── Mongoose models
@@ -15,7 +15,7 @@ Browser
 
 ## Frontend
 
-- `brainly-frontend/src/App.tsx` declares `/signup`, `/signin`, `/dashboard`, and `/share/:hash`; `/` redirects to `/signin`.
+- `mindvault-frontend/src/App.tsx` declares `/signup`, `/signin`, `/dashboard`, and `/share/:hash`; `/` redirects to `/signin`.
 - `src/components/ProtectedRoute.tsx` guards authenticated dashboard routes.
 - `src/pages/` contains sign-in, sign-up, dashboard, and shared-view screens.
 - `src/hooks/useContent.tsx` loads the user's saved content.
@@ -24,8 +24,8 @@ Browser
 
 ## Backend
 
-- `Brainly/src/server.ts` connects to MongoDB and starts the HTTP server.
-- `Brainly/src/app.ts` configures JSON parsing, CORS, API routes, a JSON 404 response, and centralized error handling.
+- `mindvault-backend/src/server.ts` connects to MongoDB and starts the HTTP server.
+- `mindvault-backend/src/app.ts` configures JSON parsing, CORS, API routes, a JSON 404 response, and centralized error handling.
 - `src/config.ts` reads environment variables and requires `JWT_SECRET`; in production it also requires `MONGO_URI` and `FRONTEND_URL`.
 - `src/routes/` maps URL paths to controller functions.
 - `src/controllers/` contains request validation and application behavior.

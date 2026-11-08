@@ -6,4 +6,4 @@
 *.log
 
 # TypeScript incremental build metadata
-/Brainly/tsconfig.tsbuildinfo
+/mindvault-backend/tsconfig.tsbuildinfo

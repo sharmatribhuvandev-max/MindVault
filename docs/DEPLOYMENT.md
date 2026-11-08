@@ -4,19 +4,20 @@ The current deployment setup uses Vercel for the frontend and a separately hoste
 
 ## Environment variables
 
-### Backend (`Brainly/`)
+### Backend (`mindvault-backend/`)
 
 | Variable | Required / behavior | Example for local development |
 |---|---|---|
 | `PORT` | Optional; defaults to `3000` | `3000` |
 | `NODE_ENV` | Set to `production` in production | `development` |
-| `MONGO_URI` | MongoDB connection string; required in production | `mongodb://localhost:27017/brainly` |
+| `MONGO_URI` | MongoDB connection string; required in production | `mongodb://localhost:27017/mindvault` |
 | `JWT_SECRET` | Required; use a strong, random secret | `replace_with_a_random_secret` (placeholder only; replace it) |
 | `FRONTEND_URL` | Allowed frontend origin for CORS; required in production | `http://localhost:5173` |
+| `TRUST_PROXY` | Optional; number of reverse proxies in front of the API, used so rate limiting sees real client IPs. Defaults to `1` in production (correct for Render) and `0` otherwise | unset |
 
-`Brainly/src/config.ts` throws during startup if `JWT_SECRET` is missing, and in production if `MONGO_URI` or `FRONTEND_URL` is missing.
+`mindvault-backend/src/config.ts` throws during startup if `JWT_SECRET` is missing, and in production if `MONGO_URI` or `FRONTEND_URL` is missing.
 
-### Frontend (`brainly-frontend/`)
+### Frontend (`mindvault-frontend/`)
 
 | Variable | Purpose | Example for local development |
 |---|---|---|
@@ -26,7 +27,7 @@ Do not include `/api/v1` in `VITE_API_URL`, or the frontend would append it a se
 
 ## Vercel frontend
 
-1. Set the Vercel project root directory to `brainly-frontend`.
+1. Set the Vercel project root directory to `mindvault-frontend`.
 2. Configure `VITE_API_URL` to the deployed backend origin (origin only, no `/api/v1`).
 3. Confirm the build command is `npm run build` and the output directory is `dist` (Vite default).
 4. Keep `vercel.json`'s SPA rewrite so direct visits and refreshes of `/signin`, `/signup`, `/dashboard`, and `/share/:hash` reach `index.html`.
@@ -34,7 +35,7 @@ Do not include `/api/v1` in `VITE_API_URL`, or the frontend would append it a se
 
 ## Render backend
 
-1. Set the service root directory to `Brainly`.
+1. Set the service root directory to `mindvault-backend`.
 2. Install dependencies with `npm install` (or the provider's standard install step).
 3. Build with `npm run build`.
 4. Start with `npm start`.
@@ -45,7 +46,7 @@ The backend's source starts the listener after a successful MongoDB connection. 
 
 ## Safe deployment checklist
 
-- Never commit `Brainly/.env` or production secrets.
+- Never commit `mindvault-backend/.env` or production secrets.
 - Keep `.env.example` values as local placeholders only.
 - Ensure `FRONTEND_URL` exactly matches the browser origin allowed by CORS.
 - Ensure `VITE_API_URL` points to the backend origin and is configured before the frontend build.
