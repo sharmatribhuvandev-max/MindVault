@@ -1,4 +1,4 @@
-# Brainly API reference
+# Mind Vault API reference
 
 Base URL: `{BACKEND_ORIGIN}/api/v1` (for local development, `http://localhost:3000/api/v1`). Send JSON request bodies with `Content-Type: application/json` where applicable.
 
@@ -24,6 +24,11 @@ Signup/signin request body:
 ```
 
 Username must be 3–30 characters after trimming. Password must contain at least 8 characters. Signup returns a message; sign-in returns `{ "token": "..." }`. Duplicate usernames return HTTP 409; invalid input returns HTTP 400; invalid credentials return HTTP 401.
+
+Both routes are rate-limited per client IP and return HTTP 429 with a `Retry-After` header when exceeded:
+
+- `/signin`: 10 failed attempts per 15 minutes (successful sign-ins are not counted).
+- `/signup`: 10 requests per hour.
 
 ## Content
 
@@ -80,6 +85,7 @@ Responses generally include a JSON `message` field. Common status codes include:
 - `403` — supplied tag/collection does not belong to the current user.
 - `404` — resource, route, or share link not found.
 - `409` — duplicate username/tag/collection.
+- `429` — too many sign-in or sign-up attempts from this IP; retry after the `Retry-After` interval.
 - `500` — unexpected server error; internal details are not returned to the client.
 
 This reference was written against the Phase 13 audit snapshot. Controller behavior is authoritative if this document becomes stale.

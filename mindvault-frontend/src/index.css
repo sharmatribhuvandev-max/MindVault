@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --gray-100: #f4f5f9;
+  --gray-200: #e5e7eb;
+  --gray-600: #6b7280;
+  --purple-200: #e9e7fb;
+  --purple-500: #8b7ee8;
+  --purple-600: #6957d8;
+  --mindvault-ink: #202033;
+  --mindvault-muted: #697386;
+  --mindvault-border: #e6e8f0;
+  --mindvault-surface: #ffffff;
+  --mindvault-background: #f7f8fc;
+  --mindvault-focus: #6d5ce7;
+
+  background: var(--mindvault-background);
+  color: var(--mindvault-ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--mindvault-background);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--mindvault-background);
+  color: var(--mindvault-ink);
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--mindvault-focus);
+  outline-offset: 3px;
+}
+
+::selection {
+  color: #282044;
+  background: #e7e2ff;
+}
+
+img,
+iframe,
+video {
+  max-width: 100%;
+}
