@@ -2,7 +2,7 @@
 
 Mind Vault is a full-stack personal knowledge dashboard for saving useful links, organizing them with tags and collections, marking content as favorite or pinned, adding private notes, and sharing a public view of your saved content.
 
-Live frontend: <https://brainly-ruddy.vercel.app>
+Live frontend: <https://mindvault-ruddy.vercel.app>
 
 ## Project layout
 

@@ -2,7 +2,7 @@
 
 React + TypeScript frontend for the Mind Vault personal knowledge dashboard. It is built with Vite and uses React Router for client-side navigation and Axios to call the Express API.
 
-Production frontend: <https://brainly-ruddy.vercel.app>
+Production frontend: <https://mindvault-ruddy.vercel.app>
 
 ## Requirements
 
