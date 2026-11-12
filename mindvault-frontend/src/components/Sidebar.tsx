@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { BrainIcon } from "../icons/BrainIcon";
+import { LogoutIcon } from "../icons/LogoutIcon";
 import { TwitterIcon } from "../icons/TwitterIcon";
 import { YouTubeIcon } from "../icons/YoutubeIcon";
 import { SidebarItem } from "./SidebarItem";
@@ -27,6 +28,9 @@ interface SidebarProps {
     deletingCollectionId: string | null;
     isOpen?: boolean;
     onClose?: () => void;
+    onLogout?: () => void;
+    loggingOut?: boolean;
+    username?: string | null;
 }
 
 export function Sidebar({
@@ -39,6 +43,9 @@ export function Sidebar({
     deletingCollectionId,
     isOpen = false,
     onClose,
+    onLogout,
+    loggingOut = false,
+    username = null,
 }: SidebarProps) {
     useEffect(() => {
         if (!isOpen) {
@@ -145,6 +152,37 @@ export function Sidebar({
                         </section>
                     )}
                 </nav>
+
+                {(username || onLogout) && (
+                    <div className="sidebar-footer">
+                        {username && (
+                            <div className="sidebar-user" title={`Signed in as ${username}`}>
+                                <span className="sidebar-user-avatar" aria-hidden="true">
+                                    {username.charAt(0).toUpperCase()}
+                                </span>
+                                <span className="sidebar-user-text">
+                                    <span className="sidebar-user-label">Signed in as</span>
+                                    <span className="sidebar-user-name">{username}</span>
+                                </span>
+                            </div>
+                        )}
+
+                        {onLogout && (
+                            <button
+                                type="button"
+                                onClick={onLogout}
+                                disabled={loggingOut}
+                                title="Signs you out on all your devices"
+                                className="sidebar-item sidebar-logout flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                            >
+                                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center" aria-hidden="true">
+                                    <LogoutIcon />
+                                </span>
+                                <span>{loggingOut ? "Logging out…" : "Logout"}</span>
+                            </button>
+                        )}
+                    </div>
+                )}
             </aside>
         </>
     );

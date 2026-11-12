@@ -10,7 +10,9 @@ import request from "supertest";
 import jwt from "jsonwebtoken";
 
 vi.mock("../src/db.js", () => ({
-    UserModel: {},
+    UserModel: {
+        findById: vi.fn().mockResolvedValue({ tokenVersion: 0 }),
+    },
     TagModel: {
         create: vi.fn(),
         findOne: vi.fn(),
