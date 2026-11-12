@@ -5,6 +5,7 @@ import "../App.css";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { CreateContentModal } from "../components/CreateContentModal";
+import { ShareDialog } from "../components/ShareDialog";
 
 import { PlusIcon } from "../icons/PlusIcon";
 import { ShareIcon } from "../icons/ShareIcon";
@@ -57,6 +58,10 @@ export default function Dashboard() {
 
     const [sharingEnabled, setSharingEnabled] =
         useState(false);
+
+    // The public link shown in the share dialog; null when it's closed.
+    const [shareUrl, setShareUrl] =
+        useState<string | null>(null);
 
     const [searchQuery, setSearchQuery] =
         useState("");
@@ -294,6 +299,10 @@ export default function Dashboard() {
         navigate("/signin", { replace: true });
     }
 
+    const closeShareDialog = useCallback(() => {
+        setShareUrl(null);
+    }, []);
+
     async function createShareLink() {
         try {
             const token =
@@ -317,18 +326,11 @@ export default function Dashboard() {
                 }
             );
 
-            const shareUrl =
-                `${window.location.origin}/share/${response.data.hash}`;
-
-            await navigator.clipboard.writeText(
-                shareUrl
+            setShareUrl(
+                `${window.location.origin}/share/${response.data.hash}`
             );
 
             setSharingEnabled(true);
-
-            alert(
-                "Share link copied to clipboard!"
-            );
         } catch (error) {
             console.error(
                 "Failed to create share link:",
@@ -885,6 +887,13 @@ export default function Dashboard() {
                         <span className="dashboard-mobile-brand">Mind Vault</span>
                     </div>
 
+                    {shareUrl && (
+                        <ShareDialog
+                            url={shareUrl}
+                            onClose={closeShareDialog}
+                        />
+                    )}
+
                     <CreateContentModal
                         open={modalOpen}
                         onClose={
@@ -946,27 +955,24 @@ export default function Dashboard() {
                                 }
                             />
 
-                            {sharingEnabled ? (
+                            <Button
+                                onClick={
+                                    createShareLink
+                                }
+                                variant="secondary"
+                                text="Share Brain"
+                                startIcon={
+                                    <ShareIcon />
+                                }
+                            />
+
+                            {sharingEnabled && (
                                 <Button
                                     onClick={
                                         disableSharing
                                     }
                                     variant="secondary"
                                     text="Disable Sharing"
-                                    startIcon={
-                                        <ShareIcon />
-                                    }
-                                />
-                            ) : (
-                                <Button
-                                    onClick={
-                                        createShareLink
-                                    }
-                                    variant="secondary"
-                                    text="Share Brain"
-                                    startIcon={
-                                        <ShareIcon />
-                                    }
                                 />
                             )}
                         </div>
