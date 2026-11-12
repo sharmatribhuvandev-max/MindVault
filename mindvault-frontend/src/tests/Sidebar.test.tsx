@@ -233,4 +233,18 @@ expect(
 
     expect(screen.getByRole('button', { name: /Logging out/i })).toBeDisabled()
   })
+
+  it('shows the signed-in username with its initial', () => {
+    render(<Sidebar {...defaultProps} username="tribhuvan" />)
+
+    expect(screen.getByText('tribhuvan')).toBeInTheDocument()
+    expect(screen.getByText('T')).toBeInTheDocument()
+    expect(screen.getByTitle('Signed in as tribhuvan')).toBeInTheDocument()
+  })
+
+  it('shows no user block when the username is unknown', () => {
+    render(<Sidebar {...defaultProps} />)
+
+    expect(screen.queryByText(/Signed in as/i)).not.toBeInTheDocument()
+  })
 })

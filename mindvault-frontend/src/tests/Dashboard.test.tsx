@@ -47,8 +47,10 @@ vi.mock('../components/Sidebar', () => ({
         selectedCollectionId,
         isOpen,
         onLogout,
+        username,
     }: ComponentProps<typeof Sidebar>) => (
         <aside data-testid="sidebar" data-open={String(isOpen)}>
+            {username && <p>User: {username}</p>}
             <button onClick={onLogout}>Logout</button>
             <button onClick={() => onSelectType('favorites')}>Sidebar Favorites</button>
             <button onClick={() => onSelectType('pinned')}>Sidebar Pinned</button>
@@ -153,9 +155,13 @@ beforeEach(() => {
         error: currentError,
     } as never)
 
-    vi.mocked(axios.get).mockResolvedValue({
-        data: { collections: sampleCollections },
-    } as never)
+    vi.mocked(axios.get).mockImplementation((url: string) =>
+        Promise.resolve(
+            url.endsWith('/api/v1/me')
+                ? { data: { username: 'testuser' } }
+                : { data: { collections: sampleCollections } },
+        ) as never,
+    )
 
     vi.mocked(axios.post).mockResolvedValue({
         data: { hash: 'share123' },
@@ -297,6 +303,16 @@ describe('Dashboard component', () => {
         })
         expect(localStorage.getItem('token')).toBeNull()
         consoleError.mockRestore()
+    })
+
+    it('loads the signed-in username into the sidebar', async () => {
+        render(<Dashboard />)
+
+        expect(await screen.findByText('User: testuser')).toBeInTheDocument()
+        expect(axios.get).toHaveBeenCalledWith(
+            expect.stringMatching(/\/api\/v1\/me$/),
+            { headers: { Authorization: 'Bearer test-token' } },
+        )
     })
 
     it('sends the favorite update with the authentication token', async () => {

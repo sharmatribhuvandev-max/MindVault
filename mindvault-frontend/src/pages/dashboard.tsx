@@ -117,6 +117,46 @@ export default function Dashboard() {
         }
     }, [navigate]);
 
+    const [username, setUsername] =
+        useState<string | null>(null);
+
+    // Load the signed-in user's name once, for the sidebar.
+    useEffect(() => {
+        let ignore = false;
+        const token =
+            localStorage.getItem("token");
+
+        if (!token) {
+            return;
+        }
+
+        axios
+            .get(`${BACKEND_URL}/api/v1/me`, {
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`,
+                },
+            })
+            .then((response) => {
+                const name = response.data?.username;
+
+                if (!ignore && typeof name === "string") {
+                    setUsername(name);
+                }
+            })
+            .catch((error) => {
+                // Not critical: the sidebar just shows no name.
+                console.error(
+                    "Failed to fetch current user:",
+                    error
+                );
+            });
+
+        return () => {
+            ignore = true;
+        };
+    }, []);
+
     async function fetchCollections() {
         const loaded = await loadCollections();
 
@@ -801,6 +841,7 @@ export default function Dashboard() {
                     }
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
+                    username={username}
                     onLogout={logout}
                     loggingOut={loggingOut}
                 />
