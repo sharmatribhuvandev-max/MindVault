@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { BrainIcon } from "../icons/BrainIcon";
+import { LogoutIcon } from "../icons/LogoutIcon";
 import { TwitterIcon } from "../icons/TwitterIcon";
 import { YouTubeIcon } from "../icons/YoutubeIcon";
 import { SidebarItem } from "./SidebarItem";
@@ -27,6 +28,8 @@ interface SidebarProps {
     deletingCollectionId: string | null;
     isOpen?: boolean;
     onClose?: () => void;
+    onLogout?: () => void;
+    loggingOut?: boolean;
 }
 
 export function Sidebar({
@@ -39,6 +42,8 @@ export function Sidebar({
     deletingCollectionId,
     isOpen = false,
     onClose,
+    onLogout,
+    loggingOut = false,
 }: SidebarProps) {
     useEffect(() => {
         if (!isOpen) {
@@ -145,6 +150,23 @@ export function Sidebar({
                         </section>
                     )}
                 </nav>
+
+                {onLogout && (
+                    <div className="sidebar-footer">
+                        <button
+                            type="button"
+                            onClick={onLogout}
+                            disabled={loggingOut}
+                            title="Signs you out on all your devices"
+                            className="sidebar-item sidebar-logout flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                        >
+                            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center" aria-hidden="true">
+                                <LogoutIcon />
+                            </span>
+                            <span>{loggingOut ? "Logging out…" : "Logout"}</span>
+                        </button>
+                    </div>
+                )}
             </aside>
         </>
     );

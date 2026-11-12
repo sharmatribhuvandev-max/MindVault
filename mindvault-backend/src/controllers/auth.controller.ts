@@ -122,6 +122,7 @@ export async function signin(
         const token = jwt.sign(
             {
                 id: existingUser._id.toString(),
+                tv: existingUser.tokenVersion ?? 0,
             },
             JWT_PASSWORD,
             {
@@ -134,6 +135,28 @@ export async function signin(
         });
     } catch (error: unknown) {
         console.error("Signin failed:", error);
+
+        return res.status(500).json({
+            message: "Internal server error",
+        });
+    }
+}
+
+export async function logout(
+    req: Request,
+    res: Response
+) {
+    try {
+        await UserModel.updateOne(
+            { _id: req.userId },
+            { $inc: { tokenVersion: 1 } }
+        );
+
+        return res.json({
+            message: "Logged out",
+        });
+    } catch (error: unknown) {
+        console.error("Logout failed:", error);
 
         return res.status(500).json({
             message: "Internal server error",
