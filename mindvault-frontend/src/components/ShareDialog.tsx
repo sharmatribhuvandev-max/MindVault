@@ -26,6 +26,8 @@ const TARGET_ICONS: Record<ShareTargetId, ReactElement> = {
 interface ShareDialogProps {
     url: string;
     onClose: () => void;
+    heading?: string;
+    description?: string;
 }
 
 type CopyState = "idle" | "copied" | "failed";
@@ -36,7 +38,12 @@ const tileClass =
 const tileIconClass =
     "flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface [&_svg]:h-5 [&_svg]:w-5";
 
-export function ShareDialog({ url, onClose }: ShareDialogProps) {
+export function ShareDialog({
+    url,
+    onClose,
+    heading = "Share your Brain",
+    description = "Anyone with this link can view your saved content. Private notes stay private.",
+}: ShareDialogProps) {
     const copyButtonRef = useRef<HTMLButtonElement>(null);
     const linkInputRef = useRef<HTMLInputElement>(null);
     const [copyState, setCopyState] = useState<CopyState>("idle");
@@ -99,7 +106,7 @@ export function ShareDialog({ url, onClose }: ShareDialogProps) {
             >
                 <div className="flex items-center justify-between">
                     <h2 id="share-dialog-title" className="text-base font-semibold text-ink">
-                        Share your Brain
+                        {heading}
                     </h2>
 
                     <button
@@ -113,7 +120,7 @@ export function ShareDialog({ url, onClose }: ShareDialogProps) {
                 </div>
 
                 <p className="mt-1 text-sm text-muted">
-                    Anyone with this link can view your saved content. Private notes stay private.
+                    {description}
                 </p>
 
                 <div className="mt-4 flex gap-2">

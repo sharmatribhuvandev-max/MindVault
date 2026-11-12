@@ -33,7 +33,7 @@ Do not include `/api/v1` in `VITE_API_URL`, or the frontend would append it a se
 1. Set the Vercel project root directory to `mindvault-frontend`.
 2. Configure `VITE_API_URL` to the deployed backend origin (origin only, no `/api/v1`).
 3. Confirm the build command is `npm run build` and the output directory is `dist` (Vite default).
-4. Keep `vercel.json`'s SPA rewrite so direct visits and refreshes of `/signin`, `/signup`, `/dashboard`, and `/share/:hash` reach `index.html`.
+4. Keep `vercel.json`'s SPA rewrite so direct visits and refreshes of `/signin`, `/signup`, `/dashboard`, `/shared-links`, `/share/:hash` and `/s/:hash` reach `index.html`.
 5. Redeploy after changing environment variables; Vite environment values are build-time values.
 
 ## Render backend

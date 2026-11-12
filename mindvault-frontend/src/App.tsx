@@ -10,6 +10,7 @@ import { Signin } from "./pages/Signin";
 import { Signup } from "./pages/Signup";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SharedBrain } from "./pages/SharedBrain";
+import { SharedLinks } from "./pages/SharedLinks";
 import { GuestLogin } from "./pages/GuestLogin";
 import { AuthCallback } from "./pages/AuthCallback";
 
@@ -50,11 +51,21 @@ function App() {
                     element={<SharedBrain />}
                 />
 
+                {/* Public shared item or selection */}
+                <Route
+                    path="/s/:hash"
+                    element={<SharedBrain variant="items" />}
+                />
+
                 {/* Protected application routes */}
                 <Route element={<ProtectedRoute />}>
                     <Route
                         path="/dashboard"
                         element={<Dashboard />}
+                    />
+                    <Route
+                        path="/shared-links"
+                        element={<SharedLinks />}
                     />
                 </Route>
             </Routes>

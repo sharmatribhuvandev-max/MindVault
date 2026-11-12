@@ -19,7 +19,41 @@ interface SharedContent {
 
 interface SharedBrainResponse {
     username: string;
+    title: string;
     content: SharedContent[];
+}
+
+// "brain" is a whole shared Brain (/share/:hash); "items" is a single
+// item or hand-picked selection (/s/:hash).
+type SharedPageVariant = "brain" | "items";
+
+const VARIANT_TEXT = {
+    brain: {
+        endpoint: (hash: string) => `${BACKEND_URL}/api/v1/${hash}`,
+        notFound: "Shared Brain Not Found",
+        notFoundHint: "This link may be invalid or sharing may have been disabled.",
+        empty: "No shared content yet.",
+    },
+    items: {
+        endpoint: (hash: string) => `${BACKEND_URL}/api/v1/shared/${encodeURIComponent(hash)}`,
+        notFound: "Shared link not found",
+        notFoundHint: "This link may be invalid, or its owner stopped sharing it.",
+        empty: "These items are no longer available.",
+    },
+} as const;
+
+function pageHeading(variant: SharedPageVariant, brain: SharedBrainResponse): string {
+    if (variant === "brain") {
+        return `${brain.username}'s Brain`;
+    }
+
+    if (brain.title) {
+        return brain.title;
+    }
+
+    return brain.content.length === 1
+        ? brain.content[0].title
+        : `Shared by ${brain.username}`;
 }
 
 function isValidSharedContent(
@@ -40,8 +74,13 @@ function isValidSharedContent(
     );
 }
 
-export function SharedBrain() {
+export function SharedBrain({
+    variant = "brain",
+}: {
+    variant?: SharedPageVariant;
+} = {}) {
     const { hash } = useParams<{ hash: string }>();
+    const text = VARIANT_TEXT[variant];
 
     const [brain, setBrain] =
         useState<SharedBrainResponse | null>(null);
@@ -51,14 +90,14 @@ export function SharedBrain() {
     useEffect(() => {
         const fetchSharedBrain = async () => {
             if (!hash) {
-                setError("Shared Brain Not Found");
+                setError(text.notFound);
                 setLoading(false);
                 return;
             }
 
             try {
                 const response = await axios.get(
-                    `${BACKEND_URL}/api/v1/${hash}`
+                    text.endpoint(hash)
                 );
 
                 if (
@@ -82,6 +121,10 @@ export function SharedBrain() {
 
                 setBrain({
                     username: response.data.username,
+                    title:
+                        typeof response.data.title === "string"
+                            ? response.data.title
+                            : "",
                     content: response.data.content,
                 });
 
@@ -90,7 +133,7 @@ export function SharedBrain() {
 
                 if (axios.isAxiosError(error)) {
                     if (error.response?.status === 404) {
-                        setError("Shared Brain Not Found");
+                        setError(text.notFound);
                     } else if (error.response) {
                         setError("Unable to load shared Brain. Please try again later.");
                     } else if (error.request) {
@@ -110,7 +153,7 @@ export function SharedBrain() {
         };
 
         fetchSharedBrain();
-    }, [hash]);
+    }, [hash, text]);
 
     // Show whose Brain this is in the browser tab.
     useEffect(() => {
@@ -119,12 +162,12 @@ export function SharedBrain() {
         }
 
         const previousTitle = document.title;
-        document.title = `${brain.username}'s Brain · Mind Vault`;
+        document.title = `${pageHeading(variant, brain)} · Mind Vault`;
 
         return () => {
             document.title = previousTitle;
         };
-    }, [brain]);
+    }, [brain, variant]);
 
     const topBar = (
         <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
@@ -171,7 +214,7 @@ export function SharedBrain() {
 
     if (error || !brain) {
         const isNotFound =
-            !error || error === "Shared Brain Not Found";
+            !error || error === text.notFound;
 
         return (
             <div className="flex min-h-screen flex-col bg-canvas">
@@ -183,13 +226,14 @@ export function SharedBrain() {
                         </span>
                         <h1 className="text-lg font-semibold text-ink">
                             {isNotFound
-                                ? "Shared Brain Not Found"
+                                ? text.notFound
                                 : "Unable to Load Shared Brain"}
                         </h1>
 
                         <p className="mt-1.5 text-sm text-muted" role="alert">
-                            {error ||
-                                "This link may be invalid or sharing may have been disabled."}
+                            {error && error !== text.notFound
+                                ? error
+                                : text.notFoundHint}
                         </p>
                     </div>
                 </div>
@@ -213,7 +257,7 @@ export function SharedBrain() {
 
                     <div className="min-w-0">
                         <h1 className="break-words text-2xl font-semibold tracking-[-0.025em] text-ink">
-                            {brain.username}'s Brain
+                            {pageHeading(variant, brain)}
                         </h1>
 
                         <p className="mt-0.5 text-sm text-muted">
@@ -231,7 +275,7 @@ export function SharedBrain() {
                 {brain.content.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-line-strong px-6 py-12 text-center">
                         <p className="text-sm text-muted">
-                            No shared content yet.
+                            {text.empty}
                         </p>
                     </div>
                 ) : (

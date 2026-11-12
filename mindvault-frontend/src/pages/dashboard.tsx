@@ -6,6 +6,11 @@ import { Card } from "../components/Card";
 import { CreateContentModal } from "../components/CreateContentModal";
 import { ShareDialog } from "../components/ShareDialog";
 import {
+    createItemsShareLink,
+    sharedItemsUrl,
+    ShareItemsError,
+} from "../shareItems";
+import {
     SORT_OPTIONS,
     isSortOrder,
     loadSortOrder,
@@ -16,7 +21,9 @@ import {
 
 import {
     Inbox,
+    Link2,
     Link2Off,
+    ListChecks,
     Menu,
     Plus,
     Search,
@@ -76,8 +83,19 @@ export default function Dashboard() {
         useState(false);
 
     // The public link shown in the share dialog; null when it's closed.
-    const [shareUrl, setShareUrl] =
-        useState<string | null>(null);
+    // What the share dialog is showing; null when it's closed.
+    const [shareTarget, setShareTarget] = useState<{
+        url: string;
+        heading?: string;
+        description?: string;
+    } | null>(null);
+
+    // Selection mode for sharing several items at once.
+    const [selecting, setSelecting] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [selectionTitle, setSelectionTitle] = useState("");
+    const [creatingItemShare, setCreatingItemShare] = useState(false);
+    const [shareError, setShareError] = useState("");
 
     const [searchQuery, setSearchQuery] =
         useState("");
@@ -334,8 +352,81 @@ export default function Dashboard() {
     }
 
     const closeShareDialog = useCallback(() => {
-        setShareUrl(null);
+        setShareTarget(null);
     }, []);
+
+    function toggleSelected(id: string) {
+        setSelectedIds((current) =>
+            current.includes(id)
+                ? current.filter((selectedId) => selectedId !== id)
+                : [...current, id]
+        );
+    }
+
+    function startSelecting() {
+        setSelecting(true);
+        setSelectedIds([]);
+        setSelectionTitle("");
+        setShareError("");
+    }
+
+    function stopSelecting() {
+        setSelecting(false);
+        setSelectedIds([]);
+        setSelectionTitle("");
+    }
+
+    // Creates a public link for the given items and opens the share dialog.
+    async function shareItems(ids: string[], title = "") {
+        if (ids.length === 0 || creatingItemShare) {
+            return false;
+        }
+
+        setShareError("");
+        setCreatingItemShare(true);
+
+        try {
+            const link = await createItemsShareLink(ids, title);
+            const count = ids.length;
+
+            setShareTarget({
+                url: sharedItemsUrl(link.hash),
+                heading: count === 1 ? "Share this item" : `Share ${count} items`,
+                description:
+                    count === 1
+                        ? "Anyone with this link can see this item. Private notes stay private."
+                        : "Anyone with this link can see these items. Private notes stay private.",
+            });
+
+            return true;
+        } catch (error) {
+            if (error instanceof ShareItemsError && error.unauthorized) {
+                localStorage.removeItem("token");
+                navigate("/signin");
+                return false;
+            }
+
+            setShareError(
+                error instanceof Error
+                    ? error.message
+                    : "Couldn't create a share link. Please try again."
+            );
+
+            return false;
+        } finally {
+            setCreatingItemShare(false);
+        }
+    }
+
+    function shareOneItem(id: string) {
+        void shareItems([id]);
+    }
+
+    async function shareSelection() {
+        if (await shareItems(selectedIds, selectionTitle)) {
+            stopSelecting();
+        }
+    }
 
     async function createShareLink() {
         try {
@@ -360,9 +451,9 @@ export default function Dashboard() {
                 }
             );
 
-            setShareUrl(
-                `${window.location.origin}/share/${response.data.hash}`
-            );
+            setShareTarget({
+                url: `${window.location.origin}/share/${response.data.hash}`,
+            });
 
             setSharingEnabled(true);
         } catch (error) {
@@ -948,9 +1039,55 @@ export default function Dashboard() {
                             </div>
                         )}
 
-                        {shareUrl && (
+                        {selecting && (
+                            <div
+                                role="region"
+                                aria-label="Share selected items"
+                                className="fixed inset-x-0 bottom-4 z-40 mx-auto flex w-[min(44rem,calc(100%-2rem))] flex-wrap items-center gap-2 rounded-xl border border-line bg-surface p-3 shadow-float"
+                            >
+                                <span className="text-sm font-medium text-ink" aria-live="polite">
+                                    {selectedIds.length === 0
+                                        ? "Select items to share"
+                                        : `${selectedIds.length} selected`}
+                                </span>
+
+                                <input
+                                    type="text"
+                                    value={selectionTitle}
+                                    onChange={(event) => setSelectionTitle(event.target.value)}
+                                    maxLength={100}
+                                    placeholder="Title (optional)"
+                                    aria-label="Title for the shared items"
+                                    className="field h-9 min-w-0 flex-1 basis-40"
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={() => void shareSelection()}
+                                    disabled={selectedIds.length === 0 || creatingItemShare}
+                                    className="inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-3.5 text-sm font-medium text-accent-ink shadow-soft transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4"
+                                >
+                                    <Share2 aria-hidden="true" />
+                                    {creatingItemShare
+                                        ? "Creating link…"
+                                        : selectedIds.length > 0
+                                            ? `Share ${selectedIds.length}`
+                                            : "Share"}
+                                </button>
+
+                                <Button
+                                    onClick={stopSelecting}
+                                    variant="ghost"
+                                    text="Cancel"
+                                />
+                            </div>
+                        )}
+
+                        {shareTarget && (
                             <ShareDialog
-                                url={shareUrl}
+                                url={shareTarget.url}
+                                heading={shareTarget.heading}
+                                description={shareTarget.description}
                                 onClose={closeShareDialog}
                             />
                         )}
@@ -1010,6 +1147,20 @@ export default function Dashboard() {
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2">
+                                <Button
+                                    onClick={() => navigate("/shared-links")}
+                                    variant="ghost"
+                                    text="Shared links"
+                                    startIcon={<Link2 />}
+                                />
+
+                                <Button
+                                    onClick={selecting ? stopSelecting : startSelecting}
+                                    variant="ghost"
+                                    text={selecting ? "Done selecting" : "Select"}
+                                    startIcon={<ListChecks />}
+                                />
+
                                 {sharingEnabled && (
                                     <Button
                                         onClick={
@@ -1039,6 +1190,15 @@ export default function Dashboard() {
                                 />
                             </div>
                         </header>
+
+                        {shareError && (
+                            <div
+                                className="mt-4 rounded-lg border border-danger-line bg-danger-soft px-4 py-2.5 text-sm text-danger"
+                                role="alert"
+                            >
+                                {shareError}
+                            </div>
+                        )}
 
                         {deleteError && (
                             <div className="mt-4 rounded-lg border border-danger-line bg-danger-soft px-4 py-2.5 text-sm text-danger">
@@ -1153,7 +1313,10 @@ export default function Dashboard() {
                                 ))}
                             </section>
                         ) : filteredContents.length > 0 ? (
-                            <section className="content-grid mt-6" aria-label="Saved content">
+                            <section
+                                className={`content-grid mt-6 ${selecting ? "pb-24" : ""}`}
+                                aria-label="Saved content"
+                            >
                                 {filteredContents.map(
                                     ({
                                         _id,
@@ -1203,6 +1366,10 @@ export default function Dashboard() {
                                             onEdit={
                                                 editContent
                                             }
+                                            onShare={shareOneItem}
+                                            selectable={selecting}
+                                            selected={selectedIds.includes(_id)}
+                                            onToggleSelect={toggleSelected}
                                         />
                                     )
                                 )}
