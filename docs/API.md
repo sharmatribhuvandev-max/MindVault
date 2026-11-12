@@ -86,8 +86,14 @@ Collection names are required and limited to 50 characters. Duplicate names retu
 |---|---|---|---|---|
 | `POST` | `/brain/share` | Required | Enable or disable public sharing | `{ "share": true }` or `{ "share": false }` |
 | `GET` | `/:shareLink` | Public | Read a shared Brain | No body required |
+| `POST` | `/share-links` | Required | Share one item or a selection | `{ "contentIds": ["<id>", ...], "title": "optional" }` |
+| `GET` | `/share-links` | Required | List your item/selection links | No body required |
+| `DELETE` | `/share-links/:id` | Required | Stop sharing a link | No body required |
+| `GET` | `/shared/:hash` | Public | Read a shared item or selection | No body required |
 
-Enabling sharing returns `{ "hash": "..." }`; if a link already exists, its hash is returned. Disabling sharing deletes the user's link and returns `{ "message": "Removed Link" }`. The public endpoint returns `{ "username": "...", "content": [...] }` (pinned first, then newest first) for all content owned by the account associated with the share link; the query explicitly excludes each content item's `notes` field. The current implementation does not support selecting only certain items for sharing. A missing/invalid share link returns HTTP 404.
+Enabling sharing returns `{ "hash": "..." }`; if a link already exists, its hash is returned. Disabling sharing deletes the user's link and returns `{ "message": "Removed Link" }`. The public endpoint returns `{ "username": "...", "content": [...] }` (pinned first, then newest first) for all content owned by the account associated with the share link; the query explicitly excludes each content item's `notes` field. A missing/invalid share link returns HTTP 404.
+
+**Item and selection links** are separate from the whole-Brain link and can be created and revoked independently. `POST /share-links` takes 1–100 content IDs, all owned by the caller (otherwise HTTP 404), plus an optional title of up to 100 characters. One ID creates a `kind: "item"` link, more create a `"selection"`. Sharing the same single item again without a title returns its existing link (HTTP 200) instead of creating another (HTTP 201). Responses contain `{ "shareLink": { "id", "hash", "kind", "title", "itemCount", "createdAt" } }`; the list endpoint also includes a `preview` of up to three item titles, and `itemCount` there counts only items that still exist. Links reference content by ID, so the public page always shows the current version of each item, in the order they were picked, and drops deleted items. `GET /shared/:hash` returns `{ "username", "title", "kind", "content": [...] }` with `notes` excluded. The frontend serves these at `/s/:hash`.
 
 ## Common errors
 

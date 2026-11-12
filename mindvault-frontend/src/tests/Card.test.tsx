@@ -365,4 +365,37 @@ describe('Card component', () => {
       expect(screen.getByText(/Open on LinkedIn/)).toBeInTheDocument()
     })
   })
+
+  describe('sharing and selection', () => {
+    it('calls onShare from the share button', async () => {
+      const user = userEvent.setup()
+      const onShare = vi.fn()
+      render(<Card {...defaultProps} onShare={onShare} />)
+
+      await user.click(screen.getByRole('button', { name: `Share ${defaultProps.title}` }))
+
+      expect(onShare).toHaveBeenCalledWith(defaultProps.id)
+    })
+
+    it('has no share button on public cards', () => {
+      render(<Card {...defaultProps} onShare={vi.fn()} isPublic />)
+
+      expect(screen.queryByRole('button', { name: /^Share / })).not.toBeInTheDocument()
+    })
+
+    it('shows a checkbox only in selection mode and reports toggles', async () => {
+      const user = userEvent.setup()
+      const onToggleSelect = vi.fn()
+      const { rerender } = render(<Card {...defaultProps} onToggleSelect={onToggleSelect} />)
+
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+
+      rerender(<Card {...defaultProps} selectable selected={false} onToggleSelect={onToggleSelect} />)
+      await user.click(screen.getByRole('checkbox', { name: `Select ${defaultProps.title}` }))
+      expect(onToggleSelect).toHaveBeenCalledWith(defaultProps.id)
+
+      rerender(<Card {...defaultProps} selectable selected onToggleSelect={onToggleSelect} />)
+      expect(screen.getByRole('checkbox')).toBeChecked()
+    })
+  })
 })

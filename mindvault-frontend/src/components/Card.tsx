@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
-import { ArrowUpRight, Lock, Pencil, Pin, Star, Trash2 } from "lucide-react";
+import { ArrowUpRight, Lock, Pencil, Pin, Share2, Star, Trash2 } from "lucide-react";
 
 import { ArticleIcon } from "../icons/ArticleIcon";
 import {
@@ -47,6 +47,14 @@ interface CardProps {
     isPinning?: boolean;
 
     onEdit: (id: string) => void;
+
+    // Share just this item via its own public link.
+    onShare?: (id: string) => void;
+
+    // Selection mode for sharing several items at once.
+    selectable?: boolean;
+    selected?: boolean;
+    onToggleSelect?: (id: string) => void;
 
     isPublic?: boolean;
 }
@@ -137,6 +145,10 @@ export function Card({
     isPinning = false,
     onEdit,
     isPublic = false,
+    onShare,
+    selectable = false,
+    selected = false,
+    onToggleSelect,
 }: CardProps) {
     const [noteExpanded, setNoteExpanded] = useState(false);
     const { resolved: resolvedTheme } = useTheme();
@@ -295,9 +307,24 @@ export function Card({
 
     return (
         <div className="min-w-0">
-            <article className="content-card flex min-w-0 flex-col rounded-xl border border-line bg-surface shadow-soft transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-raised">
+            <article
+                className={`content-card flex min-w-0 flex-col rounded-xl border bg-surface shadow-soft transition-[border-color,box-shadow] hover:shadow-raised ${
+                    selected
+                        ? "border-accent ring-2 ring-accent/25"
+                        : "border-line hover:border-line-strong"
+                }`}
+            >
                 {/* Meta row: type + source, with actions on the right */}
                 <div className="flex min-h-11 items-center gap-2 py-1.5 pl-4 pr-1.5">
+                    {selectable && (
+                        <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => onToggleSelect?.(id)}
+                            aria-label={`Select ${title}`}
+                            className="h-4 w-4 shrink-0 cursor-pointer accent-accent"
+                        />
+                    )}
                     <span className="flex min-w-0 flex-1 items-center gap-1.5 text-xs text-muted [&_svg]:h-3.5 [&_svg]:w-3.5">
                         <span className="shrink-0" aria-hidden="true">
                             <ContentTypeIcon type={type} />
@@ -314,6 +341,17 @@ export function Card({
                         {!isPublic && (
                             <>
                                 <span className="card-hover-actions flex items-center">
+                                    {onShare && (
+                                        <IconButton
+                                            label={`Share ${title}`}
+                                            title="Share"
+                                            onClick={() => onShare(id)}
+                                            disabled={actionsDisabled}
+                                        >
+                                            <Share2 />
+                                        </IconButton>
+                                    )}
+
                                     <IconButton
                                         label="Edit"
                                         onClick={() => onEdit(id)}

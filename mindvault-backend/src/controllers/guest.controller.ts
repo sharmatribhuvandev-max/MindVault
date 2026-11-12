@@ -9,6 +9,7 @@ import {
     CollectionModel,
     ContentModel,
     LinkModel,
+    ShareLinkModel,
     TagModel,
     UserModel,
 } from "../db.js";
@@ -43,6 +44,7 @@ export async function deleteExpiredGuests(now = new Date()): Promise<number> {
         TagModel.deleteMany(owned),
         CollectionModel.deleteMany(owned),
         LinkModel.deleteMany(owned),
+        ShareLinkModel.deleteMany(owned),
     ]);
     await UserModel.deleteMany({ _id: { $in: ids }, isGuest: true });
 

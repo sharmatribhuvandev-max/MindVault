@@ -15,6 +15,7 @@ vi.mock("../src/db.js", () => ({
     CollectionModel: { insertMany: vi.fn(), deleteMany: vi.fn() },
     ContentModel: { insertMany: vi.fn(), deleteMany: vi.fn() },
     LinkModel: { deleteMany: vi.fn() },
+    ShareLinkModel: { deleteMany: vi.fn() },
 }));
 
 import app from "../src/app.js";
@@ -22,6 +23,7 @@ import {
     CollectionModel,
     ContentModel,
     LinkModel,
+    ShareLinkModel,
     TagModel,
     UserModel,
 } from "../src/db.js";
@@ -146,6 +148,7 @@ describe("Guest sign-in", () => {
         expect(TagModel.deleteMany).toHaveBeenCalledWith(owned);
         expect(CollectionModel.deleteMany).toHaveBeenCalledWith(owned);
         expect(LinkModel.deleteMany).toHaveBeenCalledWith(owned);
+        expect(ShareLinkModel.deleteMany).toHaveBeenCalledWith(owned);
         expect(UserModel.deleteMany).toHaveBeenCalledWith({
             _id: { $in: expired },
             isGuest: true,

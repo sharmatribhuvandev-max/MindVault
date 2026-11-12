@@ -12,6 +12,10 @@ import contentRoutes from "./routes/content.routes.js";
 import collectionRoutes from "./routes/collection.routes.js";
 import shareRoutes from "./routes/share.routes.js";
 import publicBrainRoutes from "./routes/public-brain.routes.js";
+import {
+    shareLinksRouter,
+    sharedItemsRouter,
+} from "./routes/share-links.routes.js";
 
 const app = express();
 
@@ -28,6 +32,8 @@ app.use("/api/v1/tags", tagRoutes);
 app.use("/api/v1/content", contentRoutes);
 app.use("/api/v1/collections", collectionRoutes);
 app.use("/api/v1/brain", shareRoutes);
+app.use("/api/v1/share-links", shareLinksRouter);
+app.use("/api/v1/shared", sharedItemsRouter);
 app.use("/api/v1", publicBrainRoutes);
 
 // Handle unknown routes

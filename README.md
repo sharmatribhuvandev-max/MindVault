@@ -26,7 +26,7 @@ Live frontend: <https://mindvault-ruddy.vercel.app>
 - Edit saved items and organize them with tags and collections.
 - Add private notes to saved items.
 - Mark items as favorites or pinned. Pinned items stay at the top; the rest are newest first, or sorted oldest first or A–Z.
-- Create and revoke a public sharing link for your saved content.
+- Share your whole Brain, a single item, or a hand-picked selection through public links (WhatsApp, email and more), and stop sharing any link at any time from the Shared links page.
 - Browse a shared Brain; private notes are excluded from the public API response.
 - Responsive React dashboard.
 

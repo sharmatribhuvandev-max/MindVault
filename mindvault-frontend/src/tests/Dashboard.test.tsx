@@ -78,9 +78,22 @@ vi.mock('../components/Card', () => ({
         onEdit,
         isFavorite,
         isPinned,
+        onShare,
+        selectable,
+        selected,
+        onToggleSelect,
     }: ComponentProps<typeof Card>) => (
         <article data-testid="content-card">
             <h2>{title}</h2>
+            {onShare && <button onClick={() => onShare(id)}>Share {title}</button>}
+            {selectable && (
+                <input
+                    type="checkbox"
+                    aria-label={`Select ${title}`}
+                    checked={Boolean(selected)}
+                    onChange={() => onToggleSelect?.(id)}
+                />
+            )}
             <button onClick={() => onFavorite?.(id, !isFavorite)}>
                 Toggle favorite {title}
             </button>
@@ -323,6 +336,82 @@ describe('Dashboard component', () => {
         render(<Dashboard />)
         expect(screen.getByLabelText('Sort saved content')).toHaveValue('title')
         expect(cardTitles()).toEqual(['Zebra', 'Alpha', 'Beta'])
+    })
+
+    it('shares a single item from its card', async () => {
+        vi.mocked(axios.post).mockResolvedValueOnce({
+            data: { shareLink: { id: 'l1', hash: 'ItemHash1234', kind: 'item', title: '', itemCount: 1 } },
+        })
+        const user = userEvent.setup()
+        render(<Dashboard />)
+
+        await user.click(screen.getByRole('button', { name: 'Share React Tutorial' }))
+
+        expect(await screen.findByRole('dialog', { name: 'Share this item' })).toBeInTheDocument()
+        expect(screen.getByLabelText('Share link')).toHaveValue(
+            `${window.location.origin}/s/ItemHash1234`,
+        )
+        expect(axios.post).toHaveBeenCalledWith(
+            expect.stringMatching(/\/api\/v1\/share-links$/),
+            { contentIds: ['content-1'] },
+            { headers: { Authorization: 'Bearer test-token' } },
+        )
+    })
+
+    it('selects several items and shares them with a title', async () => {
+        vi.mocked(axios.post).mockResolvedValueOnce({
+            data: { shareLink: { id: 'l2', hash: 'SelHash12345', kind: 'selection', title: 'Picks', itemCount: 2 } },
+        })
+        const user = userEvent.setup()
+        render(<Dashboard />)
+
+        expect(screen.queryByLabelText('Select React Tutorial')).not.toBeInTheDocument()
+
+        await user.click(screen.getByRole('button', { name: 'Select' }))
+        const bar = screen.getByRole('region', { name: 'Share selected items' })
+        expect(bar).toHaveTextContent('Select items to share')
+
+        await user.click(screen.getByLabelText('Select TypeScript Guide'))
+        await user.click(screen.getByLabelText('Select React Tutorial'))
+        expect(bar).toHaveTextContent('2 selected')
+
+        await user.type(screen.getByLabelText('Title for the shared items'), 'Picks')
+        await user.click(screen.getByRole('button', { name: 'Share 2' }))
+
+        expect(await screen.findByRole('dialog', { name: 'Share 2 items' })).toBeInTheDocument()
+        expect(axios.post).toHaveBeenCalledWith(
+            expect.stringMatching(/\/api\/v1\/share-links$/),
+            { contentIds: ['content-2', 'content-1'], title: 'Picks' },
+            expect.anything(),
+        )
+        // Selection mode ends once the link is created.
+        expect(screen.queryByRole('region', { name: 'Share selected items' })).not.toBeInTheDocument()
+    })
+
+    it('cannot share an empty selection, and Cancel leaves selection mode', async () => {
+        const user = userEvent.setup()
+        render(<Dashboard />)
+
+        await user.click(screen.getByRole('button', { name: 'Select' }))
+        expect(screen.getByRole('button', { name: 'Share' })).toBeDisabled()
+
+        await user.click(screen.getByRole('button', { name: 'Cancel' }))
+        expect(screen.queryByRole('region', { name: 'Share selected items' })).not.toBeInTheDocument()
+        expect(axios.post).not.toHaveBeenCalled()
+    })
+
+    it('shows an error when creating an item link fails', async () => {
+        vi.mocked(axios.isAxiosError).mockReturnValue(true)
+        vi.mocked(axios.post).mockRejectedValueOnce({
+            response: { status: 404, data: { message: 'One or more items were not found' } },
+        })
+        const user = userEvent.setup()
+        render(<Dashboard />)
+
+        await user.click(screen.getByRole('button', { name: 'Share React Tutorial' }))
+
+        expect(await screen.findByText('One or more items were not found')).toBeInTheDocument()
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
 
     it('logs out by revoking the token on the server, removing it, and navigating to signin', async () => {

@@ -6,6 +6,7 @@ import { TagModel } from "./models/Tag.js";
 import { CollectionModel } from "./models/Collection.js";
 import { ContentModel } from "./models/Content.js";
 import { LinkModel } from "./models/Link.js";
+import { ShareLinkModel } from "./models/ShareLink.js";
 
 export async function connectToDatabase(): Promise<void> {
     await mongoose.connect(MONGO_URI);
@@ -18,4 +19,5 @@ export {
     CollectionModel,
     ContentModel,
     LinkModel,
+    ShareLinkModel,
 };
