@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { Sparkles } from "lucide-react";
+
+import { authErrorBox, authSecondaryButton } from "../authStyles";
 import { startGuestSession } from "../guestSession";
 
 export function GuestButton() {
@@ -32,18 +35,19 @@ export function GuestButton() {
                 type="button"
                 onClick={() => void continueAsGuest()}
                 disabled={loading}
-                className="flex min-h-11 w-full items-center justify-center rounded-lg border border-[var(--purple-600)] bg-white px-4 py-3 text-sm font-semibold text-[var(--purple-600)] transition hover:bg-violet-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--mindvault-focus)] disabled:cursor-not-allowed disabled:opacity-60"
+                className={authSecondaryButton}
             >
+                <Sparkles className="h-4 w-4 text-accent-text" aria-hidden="true" />
                 {loading ? "Setting up a demo account…" : "Continue as guest"}
             </button>
 
-            <p className="mt-2 text-center text-xs text-[var(--mindvault-muted)]">
+            <p className="mt-2 text-center text-xs text-faint">
                 No sign-up needed. Explore a demo account with sample content.
             </p>
 
             {error && (
                 <p
-                    className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                    className={`mt-3 ${authErrorBox}`}
                     role="alert"
                 >
                     {error}

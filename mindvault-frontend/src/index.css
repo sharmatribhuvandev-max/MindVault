@@ -1,74 +1,238 @@
+@import "@fontsource-variable/inter";
 @import "tailwindcss";
 
+/*
+ * Theme tokens. Components use the semantic Tailwind colors defined in
+ * @theme below (bg-surface, text-muted, border-line, bg-accent, ...), so
+ * switching theme only swaps these variables.
+ *
+ * The theme is chosen by `data-theme` on <html> (set before first paint by
+ * the inline script in index.html, then kept in sync by src/theme.ts).
+ */
 :root {
   color-scheme: light;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 
-  --gray-100: #f4f5f9;
-  --gray-200: #e5e7eb;
-  --gray-600: #6b7280;
-  --purple-200: #e9e7fb;
-  --purple-500: #8b7ee8;
-  --purple-600: #6957d8;
-  --mindvault-ink: #202033;
-  --mindvault-muted: #697386;
-  --mindvault-border: #e6e8f0;
-  --mindvault-surface: #ffffff;
-  --mindvault-background: #f7f8fc;
-  --mindvault-focus: #6d5ce7;
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-2: #f4f4f6;
+  --surface-3: #ebebef;
+  --line: #e5e5ea;
+  --line-strong: #d1d1d9;
+  --ink: #18181b;
+  --ink-2: #3f3f46;
+  --muted: #6b6b76;
+  --faint: #9e9eaa;
 
-  background: var(--mindvault-background);
-  color: var(--mindvault-ink);
+  --accent: #6447d9;
+  --accent-hover: #5537c9;
+  --accent-ink: #ffffff;
+  --accent-text: #5537c9;
+  --accent-soft: #f0edfc;
+  --accent-ring: rgb(100 71 217 / 0.28);
+
+  --danger: #c0281b;
+  --danger-soft: #fdf1f0;
+  --danger-line: #f6cfcb;
+  --success: #157a3c;
+  --star: #d98a04;
+  --note: #fbf9f3;
+  --note-line: #efe9d8;
+
+  --overlay: rgb(15 15 20 / 0.42);
+  --shadow-sm: 0 1px 2px rgb(16 16 24 / 0.05);
+  --shadow-md: 0 1px 2px rgb(16 16 24 / 0.04), 0 6px 16px -4px rgb(16 16 24 / 0.08);
+  --shadow-lg: 0 2px 6px rgb(16 16 24 / 0.06), 0 24px 48px -12px rgb(16 16 24 / 0.22);
 }
 
-* {
-  box-sizing: border-box;
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0e0e11;
+  --surface: #17171b;
+  --surface-2: #1e1e23;
+  --surface-3: #27272d;
+  --line: #2a2a31;
+  --line-strong: #3a3a43;
+  --ink: #f2f2f4;
+  --ink-2: #d2d2d8;
+  --muted: #a0a0ab;
+  --faint: #6e6e7a;
+
+  --accent: #6d52e6;
+  --accent-hover: #7c63ec;
+  --accent-ink: #ffffff;
+  --accent-text: #ad9cf8;
+  --accent-soft: rgb(139 116 240 / 0.14);
+  --accent-ring: rgb(150 128 245 / 0.38);
+
+  --danger: #f2837a;
+  --danger-soft: rgb(242 131 122 / 0.1);
+  --danger-line: rgb(242 131 122 / 0.28);
+  --success: #5fd08a;
+  --star: #f2b63d;
+  --note: #1c1b17;
+  --note-line: #2f2c22;
+
+  --overlay: rgb(0 0 0 / 0.62);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 20px -6px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 28px 56px -12px rgb(0 0 0 / 0.7);
 }
 
-html {
-  min-width: 320px;
-  min-height: 100%;
-  background: var(--mindvault-background);
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --color-canvas: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --color-success: var(--success);
+  --color-star: var(--star);
+  --color-note: var(--note);
+  --color-note-line: var(--note-line);
+  --color-overlay: var(--overlay);
+
+  --shadow-soft: var(--shadow-sm);
+  --shadow-raised: var(--shadow-md);
+  --shadow-float: var(--shadow-lg);
 }
 
-body {
-  min-width: 320px;
-  min-height: 100vh;
-  margin: 0;
-  background: var(--mindvault-background);
-  color: var(--mindvault-ink);
-  font-family: inherit;
-  line-height: 1.5;
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Base element styles live in the base layer so utilities can override them. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    min-width: 320px;
+    min-height: 100%;
+    background: var(--bg);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: inherit;
+    line-height: 1.5;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  ::placeholder {
+    color: var(--faint);
+    opacity: 1;
+  }
+
+  img,
+  iframe,
+  video {
+    max-width: 100%;
+  }
 }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
+/* Shared form-field look: inputs, selects and textareas. In the components
+   layer so Tailwind utilities (h-10, pl-9, w-auto...) can override it. */
+@layer components {
+  .field {
+    width: 100%;
+    min-height: 2.5rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 0.5rem;
+    background: var(--surface);
+    padding: 0.5rem 0.75rem;
+    color: var(--ink);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+
+  .field:hover:not(:disabled) {
+    border-color: var(--faint);
+  }
+
+  .field:focus,
+  .field:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-ring);
+  }
+
+  .field:disabled {
+    cursor: not-allowed;
+    background: var(--surface-2);
+    color: var(--muted);
+  }
+
+  select.field {
+    appearance: none;
+    padding-right: 2rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239e9eaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.6rem center;
+    background-repeat: no-repeat;
+  }
+
+  textarea.field {
+    resize: vertical;
+  }
 }
 
-button {
-  -webkit-tap-highlight-color: transparent;
-}
-
-:focus-visible {
-  outline: 3px solid var(--mindvault-focus);
-  outline-offset: 3px;
-}
-
-::selection {
-  color: #282044;
-  background: #e7e2ff;
-}
-
-img,
-iframe,
-video {
-  max-width: 100%;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

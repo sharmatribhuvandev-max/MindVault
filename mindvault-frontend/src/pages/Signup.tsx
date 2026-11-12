@@ -3,6 +3,8 @@ import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { AlternativeSignIn } from "../components/AlternativeSignIn";
+import { AuthLayout } from "../components/AuthLayout";
+import { authErrorBox, authLink, authPrimaryButton } from "../authStyles";
 import { Input } from "../components/Input";
 import { BACKEND_URL } from "../config";
 
@@ -104,78 +106,60 @@ export function Signup() {
     }
 
     return (
-        <main className="flex min-h-screen w-full items-center justify-center bg-[var(--mindvault-background)] px-4 py-8 sm:px-6">
-            <section
-                aria-labelledby="signup-title"
-                className="w-full max-w-md rounded-2xl border border-[var(--mindvault-border)] bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-9"
-            >
-                <div className="mb-8 text-center">
-                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--purple-600)]">
-                        Mind Vault
+        <AuthLayout
+            titleId="signup-title"
+            title="Create your account"
+            subtitle="Keep your useful links, notes, and ideas together."
+        >
+            <form className="space-y-4" onSubmit={signup} noValidate>
+                <Input
+                    id="signup-username"
+                    label="Username"
+                    reference={usernameRef}
+                    placeholder="Choose a username"
+                    required
+                    autoComplete="username"
+                />
+
+                <Input
+                    id="signup-password"
+                    label="Password"
+                    reference={passwordRef}
+                    placeholder="Create a password (8+ characters)"
+                    type="password"
+                    required
+                    autoComplete="new-password"
+                />
+
+                {error && (
+                    <p
+                        className={authErrorBox}
+                        role="alert"
+                    >
+                        {error}
                     </p>
+                )}
 
-                    <h1
-                        id="signup-title"
-                        className="text-2xl font-bold tracking-tight text-[var(--mindvault-ink)] sm:text-3xl"
-                    >
-                        Create your account
-                    </h1>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className={authPrimaryButton}
+                >
+                    {loading ? "Creating account…" : "Create account"}
+                </button>
+            </form>
 
-                    <p className="mt-2 text-sm text-[var(--mindvault-muted)]">
-                        Keep your useful links, notes, and ideas together.
-                    </p>
-                </div>
+            <AlternativeSignIn />
 
-                <form className="space-y-5" onSubmit={signup} noValidate>
-                    <Input
-                        id="signup-username"
-                        label="Username"
-                        reference={usernameRef}
-                        placeholder="Choose a username"
-                        required
-                        autoComplete="username"
-                    />
-
-                    <Input
-                        id="signup-password"
-                        label="Password"
-                        reference={passwordRef}
-                        placeholder="Create a password (8+ characters)"
-                        type="password"
-                        required
-                        autoComplete="new-password"
-                    />
-
-                    {error && (
-                        <p
-                            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-                            role="alert"
-                        >
-                            {error}
-                        </p>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="flex min-h-11 w-full items-center justify-center rounded-lg bg-[var(--purple-600)] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--mindvault-focus)] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        {loading ? "Creating account…" : "Create account"}
-                    </button>
-                </form>
-
-                <AlternativeSignIn />
-
-                <p className="mt-6 text-center text-sm text-[var(--mindvault-muted)]">
-                    Already have an account?{" "}
-                    <Link
-                        className="font-semibold text-[var(--purple-600)] underline-offset-4 hover:underline"
-                        to="/signin"
-                    >
-                        Sign in
-                    </Link>
-                </p>
-            </section>
-        </main>
+            <p className="mt-8 text-center text-sm text-muted">
+                Already have an account?{" "}
+                <Link
+                    className={authLink}
+                    to="/signin"
+                >
+                    Sign in
+                </Link>
+            </p>
+        </AuthLayout>
     );
 }

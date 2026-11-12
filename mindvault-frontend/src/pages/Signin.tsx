@@ -4,6 +4,8 @@ import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { AlternativeSignIn } from "../components/AlternativeSignIn";
+import { AuthLayout } from "../components/AuthLayout";
+import { authErrorBox, authLink, authPrimaryButton } from "../authStyles";
 import { Input } from "../components/Input";
 import { clearGuestSession } from "../guestSession";
 import { oauthErrorMessage } from "../oauth";
@@ -85,75 +87,59 @@ export function Signin() {
     }
 
     return (
-        <main className="flex min-h-screen w-full items-center justify-center bg-[var(--mindvault-background)] px-4 py-8 sm:px-6">
-            <section
-                aria-labelledby="signin-title"
-                className="w-full max-w-md rounded-2xl border border-[var(--mindvault-border)] bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-9"
-            >
-                <div className="mb-8 text-center">
-                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--purple-600)]">
-                        Mind Vault
+        <AuthLayout
+            titleId="signin-title"
+            title="Welcome back"
+            subtitle="Sign in to get back to your saved knowledge."
+        >
+            <form className="space-y-4" onSubmit={signin} noValidate>
+                <Input
+                    id="signin-username"
+                    label="Username"
+                    reference={usernameRef}
+                    placeholder="Enter your username"
+                    required
+                    autoComplete="username"
+                />
+                <Input
+                    id="signin-password"
+                    label="Password"
+                    reference={passwordRef}
+                    placeholder="Enter your password"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                />
+
+                {error && (
+                    <p
+                        className={authErrorBox}
+                        role="alert"
+                    >
+                        {error}
                     </p>
-                    <h1
-                        id="signin-title"
-                        className="text-2xl font-bold tracking-tight text-[var(--mindvault-ink)] sm:text-3xl"
-                    >
-                        Welcome back
-                    </h1>
-                    <p className="mt-2 text-sm text-[var(--mindvault-muted)]">
-                        Sign in to get back to your saved knowledge.
-                    </p>
-                </div>
+                )}
 
-                <form className="space-y-5" onSubmit={signin} noValidate>
-                    <Input
-                        id="signin-username"
-                        label="Username"
-                        reference={usernameRef}
-                        placeholder="Enter your username"
-                        required
-                        autoComplete="username"
-                    />
-                    <Input
-                        id="signin-password"
-                        label="Password"
-                        reference={passwordRef}
-                        placeholder="Enter your password"
-                        type="password"
-                        required
-                        autoComplete="current-password"
-                    />
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className={authPrimaryButton}
+                >
+                    {loading ? "Signing in…" : "Sign in"}
+                </button>
+            </form>
 
-                    {error && (
-                        <p
-                            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-                            role="alert"
-                        >
-                            {error}
-                        </p>
-                    )}
+            <AlternativeSignIn />
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="flex min-h-11 w-full items-center justify-center rounded-lg bg-[var(--purple-600)] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--mindvault-focus)] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        {loading ? "Signing in…" : "Sign in"}
-                    </button>
-                </form>
-
-                <AlternativeSignIn />
-
-                <p className="mt-6 text-center text-sm text-[var(--mindvault-muted)]">
-                    Don&apos;t have an account?{" "}
-                    <Link
-                        className="font-semibold text-[var(--purple-600)] underline-offset-4 hover:underline"
-                        to="/signup"
-                    >
-                        Create one
-                    </Link>
-                </p>
-            </section>
-        </main>
+            <p className="mt-8 text-center text-sm text-muted">
+                Don&apos;t have an account?{" "}
+                <Link
+                    className={authLink}
+                    to="/signup"
+                >
+                    Create one
+                </Link>
+            </p>
+        </AuthLayout>
     );
 }

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import "../App.css";
 
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
@@ -15,8 +14,17 @@ import {
     type SortOrder,
 } from "../sortContent";
 
-import { PlusIcon } from "../icons/PlusIcon";
-import { ShareIcon } from "../icons/ShareIcon";
+import {
+    Inbox,
+    Link2Off,
+    Menu,
+    Plus,
+    Search,
+    Share2,
+    Sparkles,
+} from "lucide-react";
+import { Logo } from "../components/Logo";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 import { Sidebar } from "../components/Sidebar";
 
@@ -96,7 +104,12 @@ export default function Dashboard() {
         setDeletingCollectionId,
     ] = useState<string | null>(null);
 
-    const { contents, refresh, error: contentError } = useContent();
+    const {
+        contents,
+        refresh,
+        error: contentError,
+        loaded: contentsLoaded,
+    } = useContent();
     const navigate = useNavigate();
 
     const [isGuest] = useState(isGuestSession);
@@ -847,6 +860,29 @@ export default function Dashboard() {
     }
 
     const emptyState = getEmptyState();
+    const isLoading = contentsLoaded === false;
+
+    const viewLabel = selectedCollectionId
+        ? collections.find((item) => item._id === selectedCollectionId)?.name ?? "Collection"
+        : selectedType === "all"
+            ? "All content"
+            : selectedType === "favorites"
+                ? "Favorites"
+                : selectedType === "pinned"
+                    ? "Pinned"
+                    : CONTENT_TYPE_LABELS[selectedType];
+
+    const openAddContent = () => {
+        setEditingContent(null);
+        setModalOpen(true);
+    };
+
+    const chipClass = (active: boolean) =>
+        `inline-flex h-8 shrink-0 items-center rounded-full border px-3 text-[13px] font-medium transition-colors ${
+            active
+                ? "border-ink bg-ink text-canvas"
+                : "border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink"
+        }`;
 
     return (
         <>
@@ -875,343 +911,332 @@ export default function Dashboard() {
                 />
 
                 <main className="dashboard-main">
-                    {isGuest && (
-                        <div
-                            className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900"
-                            role="status"
-                        >
-                            <span>
-                                <strong>You're exploring a demo account.</strong>{" "}
-                                Add, edit or delete anything. It's all reset after 24 hours.
-                            </span>
-                            <Link
-                                to="/signup"
-                                className="font-semibold text-violet-700 underline-offset-4 hover:underline"
-                            >
-                                Create your own account →
-                            </Link>
-                        </div>
-                    )}
-
-                    <div className="dashboard-mobile-toolbar">
+                    <div className="dashboard-mobile-toolbar sticky top-0 z-30 -mx-4 mb-4 flex h-14 items-center justify-between gap-2 border-b border-line bg-canvas/85 px-2 backdrop-blur-md">
                         <button
                             type="button"
-                            className="dashboard-menu-button"
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2"
                             onClick={() => setSidebarOpen(true)}
                             aria-expanded={sidebarOpen}
                             aria-controls="mindvault-sidebar"
                             aria-label="Open navigation menu"
                         >
-                            <span className="dashboard-menu-icon" aria-hidden="true">☰</span>
-                            <span>Menu</span>
+                            <Menu className="h-5 w-5" aria-hidden="true" />
                         </button>
-                        <span className="dashboard-mobile-brand">Mind Vault</span>
+                        <Logo />
+                        <ThemeToggle />
                     </div>
 
-                    {shareUrl && (
-                        <ShareDialog
-                            url={shareUrl}
-                            onClose={closeShareDialog}
+                    <div className="dashboard-inner">
+                        {isGuest && (
+                            <div
+                                className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border border-line bg-surface px-4 py-2.5 text-[13px] text-muted shadow-soft"
+                                role="status"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Sparkles className="h-4 w-4 shrink-0 text-accent-text" aria-hidden="true" />
+                                    <span>
+                                        <strong className="font-medium text-ink">You're exploring a demo account.</strong>{" "}
+                                        Add, edit or delete anything. It's all reset after 24 hours.
+                                    </span>
+                                </span>
+                                <Link
+                                    to="/signup"
+                                    className="font-medium text-accent-text underline-offset-4 hover:underline"
+                                >
+                                    Create your own account →
+                                </Link>
+                            </div>
+                        )}
+
+                        {shareUrl && (
+                            <ShareDialog
+                                url={shareUrl}
+                                onClose={closeShareDialog}
+                            />
+                        )}
+
+                        <CreateContentModal
+                            open={modalOpen}
+                            onClose={
+                                closeContentModal
+                            }
+                            editContent={
+                                editingContent
+                                    ? {
+                                        id: editingContent._id,
+                                        title:
+                                            editingContent.title,
+                                        link:
+                                            editingContent.link,
+                                        type:
+                                            editingContent.type,
+                                        tags:
+                                            editingContent.tags,
+                                        notes:
+                                            editingContent.notes || "",
+                                        body:
+                                            editingContent.body || "",
+                                        collectionId:
+                                            typeof editingContent.collectionId ===
+                                                "string"
+                                                ? editingContent.collectionId
+                                                : editingContent
+                                                    .collectionId
+                                                    ?._id ||
+                                                null,
+                                    }
+                                    : null
+                            }
+                            onUpdated={
+                                handleContentUpdated
+                            }
                         />
-                    )}
 
-                    <CreateContentModal
-                        open={modalOpen}
-                        onClose={
-                            closeContentModal
-                        }
-                        editContent={
-                            editingContent
-                                ? {
-                                    id: editingContent._id,
-                                    title:
-                                        editingContent.title,
-                                    link:
-                                        editingContent.link,
-                                    type:
-                                        editingContent.type,
-                                    tags:
-                                        editingContent.tags,
-                                    notes:
-                                        editingContent.notes || "",
-                                    body:
-                                        editingContent.body || "",
-                                    collectionId:
-                                        typeof editingContent.collectionId ===
-                                            "string"
-                                            ? editingContent.collectionId
-                                            : editingContent
-                                                .collectionId
-                                                ?._id ||
-                                            null,
-                                }
-                                : null
-                        }
-                        onUpdated={
-                            handleContentUpdated
-                        }
-                    />
+                        <header className="flex flex-wrap items-end justify-between gap-4">
+                            <div className="min-w-0">
+                                <h1 className="text-2xl font-semibold tracking-[-0.025em] text-ink sm:text-[28px]">
+                                    My Brain
+                                </h1>
+                                <p className="mt-1 text-sm text-muted">
+                                    {viewLabel}
+                                    {!isLoading && (
+                                        <>
+                                            {" · "}
+                                            {filteredContents.length}{" "}
+                                            {filteredContents.length === 1 ? "item" : "items"}
+                                        </>
+                                    )}
+                                </p>
+                            </div>
 
-                    <header className="dashboard-header">
-                        <div className="dashboard-heading">
-                            <p className="dashboard-eyebrow">Your personal knowledge space</p>
-                            <h1 className="dashboard-title">My Brain</h1>
-                            <p className="dashboard-subtitle">Keep your ideas, useful links, and learning notes in one place.</p>
-                        </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {sharingEnabled && (
+                                    <Button
+                                        onClick={
+                                            disableSharing
+                                        }
+                                        variant="ghost"
+                                        text="Disable Sharing"
+                                        startIcon={<Link2Off />}
+                                    />
+                                )}
 
-                        <div className="dashboard-actions">
-                            <Button
-                                onClick={() => {
-                                    setEditingContent(
-                                        null
-                                    );
-
-                                    setModalOpen(true);
-                                }}
-                                size="md"
-                                variant="primary"
-                                text="Add Content"
-                                startIcon={
-                                    <PlusIcon />
-                                }
-                            />
-
-                            <Button
-                                onClick={
-                                    createShareLink
-                                }
-                                variant="secondary"
-                                text="Share Brain"
-                                startIcon={
-                                    <ShareIcon />
-                                }
-                            />
-
-                            {sharingEnabled && (
                                 <Button
                                     onClick={
-                                        disableSharing
+                                        createShareLink
                                     }
                                     variant="secondary"
-                                    text="Disable Sharing"
+                                    text="Share Brain"
+                                    startIcon={<Share2 />}
                                 />
-                            )}
-                        </div>
-                    </header>
 
-                    {deleteError && (
-                        <div className="dashboard-feedback mt-4 border border-red-300 bg-red-50 text-red-700">
-                            {deleteError}
-                        </div>
-                    )}
-                    {contentError && (
-                        <div
-                            className="dashboard-feedback mt-4 border border-red-300 bg-red-50 text-red-700"
-                            role="alert"
-                            aria-live="polite"
-                        >
-                            {contentError}
-                        </div>
-                    )}
+                                <Button
+                                    onClick={openAddContent}
+                                    size="md"
+                                    variant="primary"
+                                    text="Add Content"
+                                    startIcon={<Plus />}
+                                />
+                            </div>
+                        </header>
 
-                    <section className="dashboard-search-section">
-                        <div className="dashboard-search-wrap relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                                🔍
-                            </span>
-
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(
-                                    event
-                                ) =>
-                                    setSearchQuery(
-                                        event.target
-                                            .value
-                                    )
-                                }
-                                placeholder="Search your content..."
-                                aria-label="Search saved content"
-                                className="dashboard-search w-full border bg-white py-3 pl-10 pr-4 outline-none"
-                            />
-                        </div>
-
-                        <label className="dashboard-sort">
-                            <span className="dashboard-sort-label">Sort</span>
-                            <select
-                                value={sortOrder}
-                                onChange={(event) =>
-                                    changeSortOrder(event.target.value)
-                                }
-                                aria-label="Sort saved content"
-                                className="dashboard-sort-select"
+                        {deleteError && (
+                            <div className="mt-4 rounded-lg border border-danger-line bg-danger-soft px-4 py-2.5 text-sm text-danger">
+                                {deleteError}
+                            </div>
+                        )}
+                        {contentError && (
+                            <div
+                                className="mt-4 rounded-lg border border-danger-line bg-danger-soft px-4 py-2.5 text-sm text-danger"
+                                role="alert"
+                                aria-live="polite"
                             >
-                                {SORT_OPTIONS.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                    </section>
+                                {contentError}
+                            </div>
+                        )}
 
-                    <nav className="dashboard-filters" aria-label="Filter saved content">
-                        <button
-                            onClick={() =>
-                                setSelectedType(
-                                    "all"
-                                )
-                            }
-                            className={`px-4 py-2 rounded-md border ${selectedType ===
-                                "all"
-                                ? "bg-black text-white"
-                                : "bg-white text-gray-700"
-                                }`}
-                        >
-                            All
-                        </button>
+                        <section className="mt-6 flex flex-wrap items-center gap-2">
+                            <div className="relative min-w-0 flex-1 basis-60">
+                                <Search
+                                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint"
+                                    aria-hidden="true"
+                                />
 
-                        {CONTENT_TYPES.map((type) => (
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(
+                                        event
+                                    ) =>
+                                        setSearchQuery(
+                                            event.target
+                                                .value
+                                        )
+                                    }
+                                    placeholder="Search titles, links and notes…"
+                                    aria-label="Search saved content"
+                                    className="field h-10 pl-9"
+                                />
+                            </div>
+
+                            <label className="flex items-center">
+                                <span className="sr-only">Sort</span>
+                                <select
+                                    value={sortOrder}
+                                    onChange={(event) =>
+                                        changeSortOrder(event.target.value)
+                                    }
+                                    aria-label="Sort saved content"
+                                    className="field h-10 w-auto"
+                                >
+                                    {SORT_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        </section>
+
+                        <nav className="dashboard-filters mt-3" aria-label="Filter saved content">
                             <button
-                                key={type}
-                                onClick={() =>
-                                    setSelectedType(type)
-                                }
-                                className={`px-4 py-2 rounded-md border ${selectedType ===
-                                    type
-                                    ? "bg-black text-white"
-                                    : "bg-white text-gray-700"
-                                    }`}
+                                type="button"
+                                onClick={() => setSelectedType("all")}
+                                aria-pressed={selectedType === "all"}
+                                className={chipClass(selectedType === "all")}
                             >
-                                {CONTENT_TYPE_LABELS[type]}
+                                All
                             </button>
-                        ))}
 
-                        <button
-                            onClick={() =>
-                                setSelectedType(
-                                    "favorites"
-                                )
-                            }
-                            className={`px-4 py-2 rounded-md border ${selectedType ===
-                                "favorites"
-                                ? "bg-black text-white"
-                                : "bg-white text-gray-700"
-                                }`}
-                        >
-                            Favorites
-                        </button>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedType("favorites")}
+                                aria-pressed={selectedType === "favorites"}
+                                className={chipClass(selectedType === "favorites")}
+                            >
+                                Favorites
+                            </button>
 
-                        <button
-                            onClick={() =>
-                                setSelectedType(
-                                    "pinned"
-                                )
-                            }
-                            className={`px-4 py-2 rounded-md border ${selectedType ===
-                                "pinned"
-                                ? "bg-black text-white"
-                                : "bg-white text-gray-700"
-                                }`}
-                        >
-                            Pinned
-                        </button>
-                    </nav>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedType("pinned")}
+                                aria-pressed={selectedType === "pinned"}
+                                className={chipClass(selectedType === "pinned")}
+                            >
+                                Pinned
+                            </button>
 
-                    {filteredContents.length >
-                        0 ? (
-                        <section className="dashboard-content-grid" aria-label="Saved content">
-                            {filteredContents.map(
-                                ({
-                                    _id,
-                                    type,
-                                    link,
-                                    title,
-                                    notes,
-                                    body,
-                                    isFavorite,
-                                    isPinned,
-                                }: Content) => (
-                                    <Card
-                                        key={_id}
-                                        id={_id}
-                                        type={type}
-                                        link={link}
-                                        title={title}
-                                        notes={notes || ""}
-                                        body={body || ""}
-                                        isFavorite={
-                                            isFavorite
-                                        }
-                                        isPinned={
-                                            isPinned
-                                        }
-                                        onFavorite={
-                                            favoriteContent
-                                        }
-                                        onPin={
-                                            pinContent
-                                        }
-                                        onDelete={
-                                            deleteContent
-                                        }
-                                        isDeleting={
-                                            deletingId ===
-                                            _id
-                                        }
-                                        isFavoriting={
-                                            favoritingId ===
-                                            _id
-                                        }
-                                        isPinning={
-                                            pinningId ===
-                                            _id
-                                        }
-                                        onEdit={
-                                            editContent
-                                        }
-                                    />
-                                )
-                            )}
-                        </section>
-                    ) : (
-                        <section className="dashboard-empty-state" aria-live="polite">
-                            <h2 className="text-2xl font-semibold text-gray-800">
-                                {
-                                    emptyState.title
-                                }
-                            </h2>
+                            {CONTENT_TYPES.map((type) => (
+                                <button
+                                    type="button"
+                                    key={type}
+                                    onClick={() => setSelectedType(type)}
+                                    aria-pressed={selectedType === type}
+                                    className={chipClass(selectedType === type)}
+                                >
+                                    {CONTENT_TYPE_LABELS[type]}
+                                </button>
+                            ))}
+                        </nav>
 
-                            <p className="mt-2 text-gray-500">
-                                {
-                                    emptyState.message
-                                }
-                            </p>
+                        {isLoading ? (
+                            <section className="content-grid mt-6" aria-busy="true" aria-label="Loading saved content">
+                                {[0, 1, 2, 3, 4, 5].map((index) => (
+                                    <div
+                                        key={index}
+                                        className="h-56 animate-pulse rounded-xl border border-line bg-surface"
+                                    >
+                                        <div className="m-4 h-3 w-24 rounded bg-surface-2" />
+                                        <div className="mx-4 h-4 w-3/4 rounded bg-surface-2" />
+                                        <div className="m-4 h-28 rounded-lg bg-surface-2" />
+                                    </div>
+                                ))}
+                            </section>
+                        ) : filteredContents.length > 0 ? (
+                            <section className="content-grid mt-6" aria-label="Saved content">
+                                {filteredContents.map(
+                                    ({
+                                        _id,
+                                        type,
+                                        link,
+                                        title,
+                                        notes,
+                                        body,
+                                        isFavorite,
+                                        isPinned,
+                                    }: Content) => (
+                                        <Card
+                                            key={_id}
+                                            id={_id}
+                                            type={type}
+                                            link={link}
+                                            title={title}
+                                            notes={notes || ""}
+                                            body={body || ""}
+                                            isFavorite={
+                                                isFavorite
+                                            }
+                                            isPinned={
+                                                isPinned
+                                            }
+                                            onFavorite={
+                                                favoriteContent
+                                            }
+                                            onPin={
+                                                pinContent
+                                            }
+                                            onDelete={
+                                                deleteContent
+                                            }
+                                            isDeleting={
+                                                deletingId ===
+                                                _id
+                                            }
+                                            isFavoriting={
+                                                favoritingId ===
+                                                _id
+                                            }
+                                            isPinning={
+                                                pinningId ===
+                                                _id
+                                            }
+                                            onEdit={
+                                                editContent
+                                            }
+                                        />
+                                    )
+                                )}
+                            </section>
+                        ) : (
+                            <section
+                                className="mt-6 flex min-h-72 flex-col items-center justify-center rounded-xl border border-dashed border-line-strong px-6 py-12 text-center"
+                                aria-live="polite"
+                            >
+                                <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-muted">
+                                    <Inbox className="h-5 w-5" aria-hidden="true" />
+                                </span>
+                                <h2 className="text-base font-semibold text-ink">
+                                    {emptyState.title}
+                                </h2>
 
-                            {emptyState.showAddButton && (
-                                <div className="mt-5">
-                                    <Button
-                                        onClick={() => {
-                                            setEditingContent(
-                                                null
-                                            );
+                                <p className="mt-1 max-w-sm text-sm text-muted">
+                                    {emptyState.message}
+                                </p>
 
-                                            setModalOpen(
-                                                true
-                                            );
-                                        }}
-                                        size="md"
-                                        variant="primary"
-                                        text="Add Content"
-                                        startIcon={
-                                            <PlusIcon />
-                                        }
-                                    />
-                                </div>
-                            )}
-                        </section>
-                    )}
+                                {emptyState.showAddButton && (
+                                    <div className="mt-5">
+                                        <Button
+                                            onClick={openAddContent}
+                                            size="md"
+                                            variant="primary"
+                                            text="Add Content"
+                                            startIcon={<Plus />}
+                                        />
+                                    </div>
+                                )}
+                            </section>
+                        )}
+                    </div>
                 </main>
             </div>
         </>

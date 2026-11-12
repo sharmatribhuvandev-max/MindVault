@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 
 interface ButtonProps {
-    variant: "primary" | "secondary";
+    variant: "primary" | "secondary" | "ghost";
     size?: "sm" | "md" | "lg";
     text: string;
     startIcon?: ReactElement;
@@ -12,18 +12,22 @@ interface ButtonProps {
 }
 
 const variantStyles = {
-    primary: "bg-[var(--purple-600)] text-white hover:bg-[var(--purple-600)]",
-    secondary: "bg-[var(--purple-200)] text-[var(--purple-600)] hover:bg-[var(--purple-300)]",
+    primary:
+        "bg-accent text-accent-ink shadow-soft hover:bg-accent-hover",
+    secondary:
+        "border border-line-strong bg-surface text-ink shadow-soft hover:bg-surface-2",
+    ghost:
+        "text-muted hover:bg-surface-2 hover:text-ink",
 };
 
 const sizeStyles = {
-    sm: "px-2 py-1",
-    md: "px-4 py-2",
-    lg: "px-6 py-4",
+    sm: "h-8 gap-1.5 px-2.5 text-[13px]",
+    md: "h-9 gap-2 px-3.5 text-sm",
+    lg: "h-11 gap-2 px-5 text-[15px]",
 };
 
 const defaultStyles =
-    "rounded-md font-light flex items-center";
+    "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0";
 
 export function Button({
     variant,
@@ -39,27 +43,18 @@ export function Button({
         <button
             type="button"
             onClick={onClick}
-            className={
-                variantStyles[variant] +
-                " " +
-                defaultStyles +
-                " " +
-                sizeStyles[size] +
-                `${fullWidth ? " w-full flex justify-center items-center" : ""} ${
-                    loading ? "opacity-45 " : ""
-                }`
-            }
+            className={[
+                defaultStyles,
+                variantStyles[variant],
+                sizeStyles[size],
+                fullWidth ? "w-full" : "",
+            ].join(" ")}
             disabled={loading}
+            aria-busy={loading || undefined}
         >
-            <div className="pr-2">
-                {startIcon}
-            </div>
-
+            {startIcon}
             {text}
-
-            <div className="pl-2">
-                {endIcon}
-            </div>
+            {endIcon}
         </button>
     );
 }

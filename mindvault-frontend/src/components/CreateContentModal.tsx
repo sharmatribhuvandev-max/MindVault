@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
-import { CrossIcon } from "../icons/CrossIcon";
+import { X } from "lucide-react";
 
-import { Button } from "./Button";
+import { ContentTypeIcon } from "./ContentTypeIcon";
 
 import { Input } from "./Input";
 
@@ -18,6 +18,10 @@ import {
     requiresLink,
     type ContentType,
 } from "../contentTypes";
+
+// Small filled button used for the inline "Create" actions.
+const SMALL_SOLID_BUTTON =
+    "inline-flex h-10 shrink-0 items-center rounded-lg bg-ink px-3 text-sm font-medium text-canvas transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40";
 
 interface Tag {
     _id: string;
@@ -591,19 +595,21 @@ function ContentModalForm({
         }
     }
 
+    const busy = loading || tagLoading || collectionLoading;
+
     return (
         <div>
             {open && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 sm:items-center sm:p-6">
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-overlay backdrop-blur-[2px] sm:items-center sm:p-6">
                     <div
-                        className="relative my-auto w-full max-w-xl rounded-xl bg-white p-4 shadow-xl sm:p-6"
+                        className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-line bg-surface shadow-float sm:max-h-[calc(100dvh-3rem)] sm:rounded-2xl"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="content-modal-title"
                         tabIndex={-1}
                     >
-                        <div className="flex justify-between items-center">
-                            <h2 id="content-modal-title" className="text-lg font-semibold">
+                        <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3.5">
+                            <h2 id="content-modal-title" className="text-base font-semibold text-ink">
                                 {isEditMode
                                     ? "Edit Content"
                                     : "Add Content"}
@@ -613,532 +619,465 @@ function ContentModalForm({
                                 type="button"
                                 aria-label="Close content dialog"
                                 onClick={() => {
-                                    if (!loading && !tagLoading && !collectionLoading) onClose();
+                                    if (!busy) onClose();
                                 }}
-                                disabled={loading || tagLoading || collectionLoading}
-                                className="rounded-md p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
+                                disabled={busy}
+                                className="-mr-1.5 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
                             >
-                                <CrossIcon />
+                                <X className="h-[18px] w-[18px]" aria-hidden="true" />
                             </button>
                         </div>
 
                         <form
-                            className="mt-4 max-h-[calc(100dvh-8rem)] space-y-4 overflow-y-auto pr-1"
+                            className="flex min-h-0 flex-1 flex-col"
                             onSubmit={(event) => {
                                 event.preventDefault();
                                 void submitContent();
                             }}
                         >
-                            <Input
-                                id="content-title"
-                                label="Title"
-                                reference={titleInputRef}
-                                required
-                                disabled={loading}
-                                value={title}
-                                onChange={(e) => {
-                                    setTitle(
-                                        e.target.value
-                                    );
-                                }}
-                                placeholder="Title"
-                            />
-
-                            <Input
-                                id="content-link"
-                                label={linkRequired ? "Link" : "Link (optional)"}
-                                required={linkRequired}
-                                disabled={loading}
-                                value={link}
-                                onChange={(e) =>
-                                    handleLinkChange(e.target.value)
-                                }
-                                placeholder="Paste a link"
-                            />
-
-                            <div>
-                                <h2 id="content-type-heading" className="text-sm font-semibold text-gray-800">Content type</h2>
-
-                                <div
-                                    className="flex flex-wrap gap-2 pb-1 pt-1"
-                                    role="group"
-                                    aria-labelledby="content-type-heading"
-                                >
-                                    {CONTENT_TYPES.map((option) => (
-                                        <Button
-                                            key={option}
-                                            text={CONTENT_TYPE_LABELS[option]}
-                                            variant={
-                                                type === option
-                                                    ? "primary"
-                                                    : "secondary"
-                                            }
-                                            onClick={() => chooseType(option)}
-                                        />
-                                    ))}
-                                </div>
-
-                                <p className="text-xs text-gray-500" aria-live="polite">
-                                    {typeWasDetected
-                                        ? `Detected ${CONTENT_TYPE_LABELS[type]} from the link.`
-                                        : "Paste a link and the type is picked for you."}
-                                </p>
-                            </div>
-
-                            {type === "note" && (
-                                <div>
-                                    <label htmlFor="content-body" className="mb-1 block text-sm font-semibold text-gray-800">
-                                        Note *
-                                    </label>
-
-                                    <textarea
-                                        id="content-body"
-                                        value={body}
-                                        onChange={(event) =>
-                                            setBody(event.target.value)
-                                        }
-                                        placeholder="Write your note..."
-                                        maxLength={NOTE_BODY_MAX_LENGTH}
-                                        rows={6}
-                                        required
-                                        disabled={loading}
-                                        className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus-visible:border-violet-600 focus-visible:ring-2 focus-visible:ring-violet-600/20 disabled:bg-gray-100"
-                                    />
-
-                                    <div className="mt-1 text-right text-xs text-gray-500">
-                                        {body.length}/{NOTE_BODY_MAX_LENGTH}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="mt-3">
-                                <label htmlFor="content-notes" className="mb-1 block text-sm font-medium text-gray-800">
-                                    Private notes
-                                </label>
-
-                                <textarea
-                                    id="content-notes"
-                                    value={notes}
-                                    onChange={(event) =>
-                                        setNotes(event.target.value)
-                                    }
-                                    placeholder="Only you can see these (optional)"
-                                    maxLength={2000}
-                                    rows={4}
+                            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+                                <Input
+                                    id="content-title"
+                                    label="Title"
+                                    reference={titleInputRef}
+                                    required
                                     disabled={loading}
-                                    className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus-visible:border-violet-600 focus-visible:ring-2 focus-visible:ring-violet-600/20 disabled:bg-gray-100"
+                                    value={title}
+                                    onChange={(e) => {
+                                        setTitle(
+                                            e.target.value
+                                        );
+                                    }}
+                                    placeholder="Title"
                                 />
 
-                                <div className="text-xs text-gray-500 text-right mt-1">
-                                    {notes.length}/2000
+                                <Input
+                                    id="content-link"
+                                    label={linkRequired ? "Link" : "Link (optional)"}
+                                    required={linkRequired}
+                                    disabled={loading}
+                                    value={link}
+                                    onChange={(e) =>
+                                        handleLinkChange(e.target.value)
+                                    }
+                                    placeholder="Paste a link"
+                                />
+
+                                <div>
+                                    <h3 id="content-type-heading" className="mb-1.5 text-[13px] font-medium text-ink-2">
+                                        Type
+                                    </h3>
+
+                                    <div
+                                        className="flex flex-wrap gap-1.5"
+                                        role="group"
+                                        aria-labelledby="content-type-heading"
+                                    >
+                                        {CONTENT_TYPES.map((option) => {
+                                            const selected = type === option;
+                                            return (
+                                                <button
+                                                    key={option}
+                                                    type="button"
+                                                    aria-pressed={selected}
+                                                    onClick={() => chooseType(option)}
+                                                    className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors [&_svg]:h-3.5 [&_svg]:w-3.5 ${
+                                                        selected
+                                                            ? "border-accent bg-accent-soft text-accent-text"
+                                                            : "border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink"
+                                                    }`}
+                                                >
+                                                    <span aria-hidden="true" className="flex">
+                                                        <ContentTypeIcon type={option} />
+                                                    </span>
+                                                    {CONTENT_TYPE_LABELS[option]}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <p className="mt-1.5 text-xs text-muted" aria-live="polite">
+                                        {typeWasDetected
+                                            ? `Detected ${CONTENT_TYPE_LABELS[type]} from the link.`
+                                            : "Paste a link and the type is picked for you."}
+                                    </p>
                                 </div>
-                            </div>
 
-                            <div className="mt-3">
-                                <label htmlFor="content-collection" className="mb-1 block text-sm font-semibold text-gray-800">
-                                    Collection
-                                </label>
+                                {type === "note" && (
+                                    <div>
+                                        <label htmlFor="content-body" className="mb-1.5 block text-[13px] font-medium text-ink-2">
+                                            Note <span className="text-faint" aria-hidden="true">*</span>
+                                        </label>
 
-                                <select
-                                    id="content-collection"
-                                    value={
-                                        selectedCollectionId
-                                    }
-                                    onChange={(event) =>
-                                        setSelectedCollectionId(
-                                            event.target.value
-                                        )
-                                    }
-                                    disabled={
-                                        loading ||
-                                        collectionLoading
-                                    }
-                                    className="
-                                            w-full
-                                            border
-                                            border-gray-300
-                                            rounded-md
-                                            px-3
-                                            py-2
-                                            bg-white
-                                            mt-2
-                                        "
-                                >
-                                    <option value="">
-                                        No collection
-                                    </option>
+                                        <textarea
+                                            id="content-body"
+                                            value={body}
+                                            onChange={(event) =>
+                                                setBody(event.target.value)
+                                            }
+                                            placeholder="Write your note..."
+                                            maxLength={NOTE_BODY_MAX_LENGTH}
+                                            rows={6}
+                                            required
+                                            disabled={loading}
+                                            className="field leading-relaxed"
+                                        />
 
-                                    {collections.map(
-                                        (collection) => (
-                                            <option
-                                                key={
-                                                    collection._id
-                                                }
-                                                value={
-                                                    collection._id
-                                                }
-                                            >
-                                                {
-                                                    collection.name
-                                                }
-                                            </option>
-                                        )
-                                    )}
-                                </select>
-
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setShowNewCollectionInput(
-                                            (current) =>
-                                                !current
-                                        )
-                                    }
-                                    disabled={
-                                        loading ||
-                                        tagLoading ||
-                                        collectionLoading
-                                    }
-                                    className="
-                                            mt-2
-                                            text-sm
-                                            text-blue-500
-                                            hover:text-blue-700
-                                            disabled:text-gray-400
-                                        "
-                                >
-                                    {showNewCollectionInput
-                                        ? "Cancel"
-                                        : "+ Create new collection"}
-                                </button>
-
-                                {showNewCollectionInput && (
-                                    <div className="mt-2">
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={
-                                                    newCollectionName
-                                                }
-                                                onChange={(
-                                                    event
-                                                ) =>
-                                                    setNewCollectionName(
-                                                        event
-                                                            .target
-                                                            .value
-                                                    )
-                                                }
-                                                placeholder="New collection name"
-                                                maxLength={
-                                                    50
-                                                }
-                                                disabled={
-                                                    collectionLoading ||
-                                                    loading
-                                                }
-                                                className="
-                                                        flex-1
-                                                        border
-                                                        border-gray-300
-                                                        rounded-md
-                                                        px-3
-                                                        py-2
-                                                        outline-none
-                                                        focus:border-gray-500
-                                                    "
-                                            />
-
-                                            <button
-                                                type="button"
-                                                onClick={
-                                                    createNewCollection
-                                                }
-                                                disabled={
-                                                    !newCollectionName.trim() ||
-                                                    collectionLoading ||
-                                                    loading
-                                                }
-                                                className="
-                                                        px-3
-                                                        py-2
-                                                        rounded-md
-                                                        bg-black
-                                                        text-white
-                                                        disabled:bg-gray-300
-                                                    "
-                                            >
-                                                {collectionLoading
-                                                    ? "Creating..."
-                                                    : "Create"}
-                                            </button>
+                                        <div className="mt-1 text-right text-xs tabular-nums text-faint">
+                                            {body.length}/{NOTE_BODY_MAX_LENGTH}
                                         </div>
                                     </div>
                                 )}
 
-                                {collectionError && (
-                                    <div className="text-red-500 text-sm mt-2">
-                                        {
-                                            collectionError
-                                        }
-                                    </div>
-                                )}
-                            </div>
+                                <div className="grid gap-5 sm:grid-cols-2">
+                                    <div>
+                                        <div className="mb-1.5 flex items-center justify-between">
+                                            <label htmlFor="content-collection" className="text-[13px] font-medium text-ink-2">
+                                                Collection
+                                            </label>
 
-                            <div className="mt-3">
-                                <h2 className="mb-1 text-sm font-semibold text-gray-800">
-                                    Tags
-                                </h2>
-
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {selectedTags.length ===
-                                        0 ? (
-                                        <p className="text-sm text-gray-500">
-                                            No tags selected.
-                                        </p>
-                                    ) : (
-                                        selectedTags.map(
-                                            (tag) => (
-                                                <div
-                                                    key={
-                                                        tag._id
-                                                    }
-                                                    className="
-                                                            flex
-                                                            items-center
-                                                            gap-1
-                                                            bg-gray-200
-                                                            rounded-full
-                                                            px-3
-                                                            py-1
-                                                            text-sm
-                                                        "
-                                                >
-                                                    <span>
-                                                        #
-                                                        {
-                                                            tag.name
-                                                        }
-                                                    </span>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            removeSelectedTag(
-                                                                tag._id
-                                                            )
-                                                        }
-                                                        disabled={
-                                                            loading
-                                                        }
-                                                        className="
-                                                                text-gray-500
-                                                                hover:text-red-500
-                                                                disabled:text-gray-400
-                                                            "
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </div>
-                                            )
-                                        )
-                                    )}
-                                </div>
-
-                                <div className="flex gap-2 mt-3">
-                                    <select
-                                        value={
-                                            selectedTagId
-                                        }
-                                        onChange={(event) =>
-                                            setSelectedTagId(
-                                                event.target
-                                                    .value
-                                            )
-                                        }
-                                        disabled={
-                                            loading ||
-                                            tagLoading
-                                        }
-                                        className="
-                                                flex-1
-                                                border
-                                                border-gray-300
-                                                rounded-md
-                                                px-3
-                                                py-2
-                                                bg-white
-                                            "
-                                    >
-                                        <option value="">
-                                            Select a tag
-                                        </option>
-
-                                        {tags
-                                            .filter(
-                                                (tag) =>
-                                                    !selectedTags.some(
-                                                        (
-                                                            selectedTag
-                                                        ) =>
-                                                            selectedTag._id ===
-                                                            tag._id
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setShowNewCollectionInput(
+                                                        (current) =>
+                                                            !current
                                                     )
-                                            )
-                                            .map(
-                                                (tag) => (
+                                                }
+                                                disabled={busy}
+                                                className="text-xs font-medium text-accent-text hover:underline disabled:text-faint disabled:no-underline"
+                                            >
+                                                {showNewCollectionInput
+                                                    ? "Cancel"
+                                                    : "+ Create new collection"}
+                                            </button>
+                                        </div>
+
+                                        <select
+                                            id="content-collection"
+                                            value={
+                                                selectedCollectionId
+                                            }
+                                            onChange={(event) =>
+                                                setSelectedCollectionId(
+                                                    event.target.value
+                                                )
+                                            }
+                                            disabled={
+                                                loading ||
+                                                collectionLoading
+                                            }
+                                            className="field"
+                                        >
+                                            <option value="">
+                                                No collection
+                                            </option>
+
+                                            {collections.map(
+                                                (collection) => (
                                                     <option
                                                         key={
-                                                            tag._id
+                                                            collection._id
                                                         }
                                                         value={
-                                                            tag._id
+                                                            collection._id
                                                         }
                                                     >
                                                         {
-                                                            tag.name
+                                                            collection.name
                                                         }
                                                     </option>
                                                 )
                                             )}
-                                    </select>
+                                        </select>
 
-                                    <button
-                                        type="button"
-                                        onClick={
-                                            addSelectedTag
-                                        }
-                                        disabled={
-                                            !selectedTagId ||
-                                            loading ||
-                                            tagLoading
-                                        }
-                                        className="
-                                                px-3
-                                                py-2
-                                                rounded-md
-                                                border
-                                                bg-white
-                                                hover:bg-gray-50
-                                                disabled:text-gray-400
-                                            "
-                                    >
-                                        Add
-                                    </button>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setShowNewTagInput(
-                                            (current) =>
-                                                !current
-                                        )
-                                    }
-                                    disabled={
-                                        loading ||
-                                        tagLoading
-                                    }
-                                    className="
-                                            mt-2
-                                            text-sm
-                                            text-blue-500
-                                            hover:text-blue-700
-                                            disabled:text-gray-400
-                                        "
-                                >
-                                    {showNewTagInput
-                                        ? "Cancel"
-                                        : "+ Create new tag"}
-                                </button>
-
-                                {showNewTagInput && (
-                                    <div className="mt-2">
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={
-                                                    newTagName
-                                                }
-                                                onChange={(
-                                                    event
-                                                ) =>
-                                                    setNewTagName(
+                                        {showNewCollectionInput && (
+                                            <div className="mt-2 flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={
+                                                        newCollectionName
+                                                    }
+                                                    onChange={(
                                                         event
-                                                            .target
+                                                    ) =>
+                                                        setNewCollectionName(
+                                                            event
+                                                                .target
+                                                                .value
+                                                        )
+                                                    }
+                                                    placeholder="New collection name"
+                                                    aria-label="New collection name"
+                                                    maxLength={
+                                                        50
+                                                    }
+                                                    disabled={
+                                                        collectionLoading ||
+                                                        loading
+                                                    }
+                                                    className="field min-w-0 flex-1"
+                                                />
+
+                                                <button
+                                                    type="button"
+                                                    onClick={
+                                                        createNewCollection
+                                                    }
+                                                    disabled={
+                                                        !newCollectionName.trim() ||
+                                                        collectionLoading ||
+                                                        loading
+                                                    }
+                                                    className={SMALL_SOLID_BUTTON}
+                                                >
+                                                    {collectionLoading
+                                                        ? "Creating..."
+                                                        : "Create"}
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {collectionError && (
+                                            <div className="mt-2 text-sm text-danger">
+                                                {
+                                                    collectionError
+                                                }
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <div className="mb-1.5 flex items-center justify-between">
+                                            <h3 className="text-[13px] font-medium text-ink-2">
+                                                Tags
+                                            </h3>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setShowNewTagInput(
+                                                        (current) =>
+                                                            !current
+                                                    )
+                                                }
+                                                disabled={
+                                                    loading ||
+                                                    tagLoading
+                                                }
+                                                className="text-xs font-medium text-accent-text hover:underline disabled:text-faint disabled:no-underline"
+                                            >
+                                                {showNewTagInput
+                                                    ? "Cancel"
+                                                    : "+ Create new tag"}
+                                            </button>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <select
+                                                value={
+                                                    selectedTagId
+                                                }
+                                                onChange={(event) =>
+                                                    setSelectedTagId(
+                                                        event.target
                                                             .value
                                                     )
                                                 }
-                                                placeholder="New tag name"
                                                 disabled={
-                                                    tagLoading ||
-                                                    loading
+                                                    loading ||
+                                                    tagLoading
                                                 }
-                                                className="
-                                                        flex-1
-                                                        border
-                                                        border-gray-300
-                                                        rounded-md
-                                                        px-3
-                                                        py-2
-                                                        outline-none
-                                                        focus:border-gray-500
-                                                    "
-                                            />
+                                                aria-label="Select a tag"
+                                                className="field min-w-0 flex-1"
+                                            >
+                                                <option value="">
+                                                    Select a tag
+                                                </option>
+
+                                                {tags
+                                                    .filter(
+                                                        (tag) =>
+                                                            !selectedTags.some(
+                                                                (
+                                                                    selectedTag
+                                                                ) =>
+                                                                    selectedTag._id ===
+                                                                    tag._id
+                                                            )
+                                                    )
+                                                    .map(
+                                                        (tag) => (
+                                                            <option
+                                                                key={
+                                                                    tag._id
+                                                                }
+                                                                value={
+                                                                    tag._id
+                                                                }
+                                                            >
+                                                                {
+                                                                    tag.name
+                                                                }
+                                                            </option>
+                                                        )
+                                                    )}
+                                            </select>
 
                                             <button
                                                 type="button"
                                                 onClick={
-                                                    createNewTag
+                                                    addSelectedTag
                                                 }
                                                 disabled={
-                                                    !newTagName.trim() ||
-                                                    tagLoading ||
-                                                    loading
+                                                    !selectedTagId ||
+                                                    loading ||
+                                                    tagLoading
                                                 }
-                                                className="
-                                                        px-3
-                                                        py-2
-                                                        rounded-md
-                                                        bg-black
-                                                        text-white
-                                                        disabled:bg-gray-300
-                                                    "
+                                                className="inline-flex h-10 shrink-0 items-center rounded-lg border border-line-strong bg-surface px-3 text-sm font-medium text-ink transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:text-faint disabled:hover:bg-surface"
                                             >
-                                                {tagLoading
-                                                    ? "Adding..."
-                                                    : "Create"}
+                                                Add
                                             </button>
                                         </div>
-                                    </div>
-                                )}
 
-                                {tagError && (
-                                    <div role="alert" aria-live="polite" className="mt-2 text-sm text-red-700">
-                                        {tagError}
+                                        {showNewTagInput && (
+                                            <div className="mt-2 flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={
+                                                        newTagName
+                                                    }
+                                                    onChange={(
+                                                        event
+                                                    ) =>
+                                                        setNewTagName(
+                                                            event
+                                                                .target
+                                                                .value
+                                                        )
+                                                    }
+                                                    placeholder="New tag name"
+                                                    aria-label="New tag name"
+                                                    disabled={
+                                                        tagLoading ||
+                                                        loading
+                                                    }
+                                                    className="field min-w-0 flex-1"
+                                                />
+
+                                                <button
+                                                    type="button"
+                                                    onClick={
+                                                        createNewTag
+                                                    }
+                                                    disabled={
+                                                        !newTagName.trim() ||
+                                                        tagLoading ||
+                                                        loading
+                                                    }
+                                                    className={SMALL_SOLID_BUTTON}
+                                                >
+                                                    {tagLoading
+                                                        ? "Adding..."
+                                                        : "Create"}
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                            {selectedTags.length ===
+                                                0 ? (
+                                                <p className="text-xs text-faint">
+                                                    No tags selected.
+                                                </p>
+                                            ) : (
+                                                selectedTags.map(
+                                                    (tag) => (
+                                                        <span
+                                                            key={
+                                                                tag._id
+                                                            }
+                                                            className="inline-flex h-6 items-center gap-0.5 rounded-full bg-surface-2 pl-2.5 pr-1 text-xs font-medium text-ink-2"
+                                                        >
+                                                            <span>
+                                                                #
+                                                                {
+                                                                    tag.name
+                                                                }
+                                                            </span>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    removeSelectedTag(
+                                                                        tag._id
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    loading
+                                                                }
+                                                                aria-label={`Remove tag ${tag.name}`}
+                                                                className="inline-flex h-4 w-4 items-center justify-center rounded-full text-faint hover:bg-surface-3 hover:text-ink disabled:opacity-50"
+                                                            >
+                                                                <X className="h-3 w-3" aria-hidden="true" />
+                                                            </button>
+                                                        </span>
+                                                    )
+                                                )
+                                            )}
+                                        </div>
+
+                                        {tagError && (
+                                            <div role="alert" aria-live="polite" className="mt-2 text-sm text-danger">
+                                                {tagError}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="content-notes" className="mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-ink-2">
+                                        Private notes
+                                    </label>
+
+                                    <textarea
+                                        id="content-notes"
+                                        value={notes}
+                                        onChange={(event) =>
+                                            setNotes(event.target.value)
+                                        }
+                                        placeholder="Only you can see these (optional)"
+                                        maxLength={2000}
+                                        rows={3}
+                                        disabled={loading}
+                                        className="field leading-relaxed"
+                                    />
+
+                                    <div className="mt-1 text-right text-xs tabular-nums text-faint">
+                                        {notes.length}/2000
+                                    </div>
+                                </div>
+
+                                {error && (
+                                    <div role="alert" aria-live="polite" className="rounded-lg border border-danger-line bg-danger-soft px-3 py-2 text-sm text-danger">
+                                        {error}
                                     </div>
                                 )}
                             </div>
 
-                            {error && (
-                                <div role="alert" aria-live="polite" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 mt-2">
-                                    {error}
-                                </div>
-                            )}
-
-                            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
+                            <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-line bg-surface px-5 py-3.5 sm:flex-row sm:justify-end">
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    disabled={loading || tagLoading || collectionLoading}
-                                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:opacity-50"
+                                    disabled={busy}
+                                    className="inline-flex h-9 items-center justify-center rounded-lg border border-line-strong bg-surface px-3.5 text-sm font-medium text-ink transition hover:bg-surface-2 disabled:opacity-50"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={loading || tagLoading || collectionLoading}
-                                    className="rounded-lg bg-violet-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                    disabled={busy}
+                                    className="inline-flex h-9 items-center justify-center rounded-lg bg-accent px-3.5 text-sm font-medium text-accent-ink shadow-soft transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {loading
                                         ? isEditMode ? "Saving changes…" : "Adding content…"

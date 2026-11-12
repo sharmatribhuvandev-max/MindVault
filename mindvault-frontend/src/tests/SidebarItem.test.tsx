@@ -66,7 +66,7 @@ describe('SidebarItem component', () => {
       .toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('applies active styles when active', () => {
+  it('marks the item as pressed when active', () => {
     render(
       <SidebarItem
         text="Favorites"
@@ -77,10 +77,10 @@ describe('SidebarItem component', () => {
     )
 
     expect(screen.getByRole('button', { name: /Favorites/i }))
-      .toHaveClass('bg-violet-100', 'text-violet-950')
+      .toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('applies inactive styles by default', () => {
+  it('is not pressed by default', () => {
     render(
       <SidebarItem
         text="YouTube"
@@ -90,7 +90,7 @@ describe('SidebarItem component', () => {
     )
 
     expect(screen.getByRole('button', { name: /YouTube/i }))
-      .toHaveClass('text-gray-700', 'hover:bg-gray-100')
+      .toHaveAttribute('aria-pressed', 'false')
   })
 
   it('renders the supplied icon', () => {

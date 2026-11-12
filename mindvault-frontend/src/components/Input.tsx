@@ -24,10 +24,11 @@ export function Input({
     autoComplete,
 }: InputProps) {
     return (
-        <div className="w-full space-y-1">
+        <div className="w-full space-y-1.5">
             {label && (
-                <label htmlFor={id} className="block text-sm font-semibold text-gray-800">
-                    {label}{required ? " *" : ""}
+                <label htmlFor={id} className="block text-[13px] font-medium text-ink-2">
+                    {label}
+                    {required && <span className="text-faint" aria-hidden="true"> *</span>}
                 </label>
             )}
             <input
@@ -40,7 +41,7 @@ export function Input({
                 required={required}
                 disabled={disabled}
                 autoComplete={autoComplete}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus-visible:border-violet-600 focus-visible:ring-2 focus-visible:ring-violet-600/20 disabled:cursor-not-allowed disabled:bg-gray-100"
+                className="field"
             />
         </div>
     );
