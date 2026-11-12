@@ -213,7 +213,7 @@ export async function createGuest(
         }
 
         const token = jwt.sign(
-            { id: user._id.toString() },
+            { id: user._id.toString(), tv: user.tokenVersion ?? 0 },
             JWT_PASSWORD,
             { expiresIn: JWT_EXPIRES_IN }
         );

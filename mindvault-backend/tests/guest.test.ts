@@ -79,8 +79,9 @@ describe("Guest sign-in", () => {
         expect(response.body.guest).toBe(true);
         expect(response.body.username).toMatch(/^guest-[0-9a-f]{8}$/);
 
-        const decoded = jwt.verify(response.body.token, TEST_SECRET) as { id: string };
+        const decoded = jwt.verify(response.body.token, TEST_SECRET) as { id: string; tv: number };
         expect(decoded.id).toBe(GUEST_ID.toString());
+        expect(decoded.tv).toBe(0);
 
         const created = vi.mocked(UserModel.create).mock.calls[0]?.[0] as unknown as {
             isGuest: boolean;

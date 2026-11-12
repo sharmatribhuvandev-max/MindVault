@@ -17,6 +17,8 @@ The JWT is issued by sign-in and currently expires after one hour. All user-owne
 | `POST` | `/signup` | Public | Create an account |
 | `POST` | `/signin` | Public | Sign in and receive a JWT |
 | `POST` | `/guest` | Public | Create a temporary demo account and receive a JWT |
+| `POST` | `/logout` | Required | Revoke the user's tokens |
+| `GET` | `/me` | Required | Get the signed-in user's username |
 
 Signup/signin request body:
 
@@ -33,6 +35,10 @@ Both routes are rate-limited per client IP and return HTTP 429 with a `Retry-Aft
 - `/guest`: 10 requests per hour.
 
 `/guest` takes no body. It creates a `guest-xxxxxxxx` account with a random, never-revealed password, fills it with sample tags, collections and content, and returns `{ "token": "...", "username": "guest-...", "guest": true, "expiresAt": "<ISO date>" }`. Guest accounts expire after 24 hours; each new guest request deletes up to 100 expired guest accounts and all their content, tags, collections and share links. Usernames starting with `guest-` are reserved and rejected by `/signup`.
+
+`/logout` takes no body and returns `{ "message": "Logged out" }`. It invalidates **every** token issued to that user so far, on all devices, not just the one sent with the request: each token carries the user's token version, and logout increments it. Any request made with an older token then gets HTTP 401.
+
+`/me` returns `{ "username": "..." }` for the signed-in user.
 
 ## Content
 

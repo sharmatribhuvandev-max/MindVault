@@ -47,8 +47,12 @@ vi.mock('../components/Sidebar', () => ({
         onSelectCollection,
         selectedCollectionId,
         isOpen,
+        onLogout,
+        username,
     }: ComponentProps<typeof Sidebar>) => (
         <aside data-testid="sidebar" data-open={String(isOpen)}>
+            {username && <p>User: {username}</p>}
+            <button onClick={onLogout}>Logout</button>
             <button onClick={() => onSelectType('favorites')}>Sidebar Favorites</button>
             <button onClick={() => onSelectType('pinned')}>Sidebar Pinned</button>
             {collections.map((collection) => (
@@ -152,9 +156,13 @@ beforeEach(() => {
         error: currentError,
     } as never)
 
-    vi.mocked(axios.get).mockResolvedValue({
-        data: { collections: sampleCollections },
-    } as never)
+    vi.mocked(axios.get).mockImplementation((url: string) =>
+        Promise.resolve(
+            url.endsWith('/api/v1/me')
+                ? { data: { username: 'testuser' } }
+                : { data: { collections: sampleCollections } },
+        ) as never,
+    )
 
     vi.mocked(axios.post).mockResolvedValue({
         data: { hash: 'share123' },
@@ -263,14 +271,49 @@ describe('Dashboard component', () => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
 
-    it('logs out by removing the token and navigating to signin', async () => {
+    it('logs out by revoking the token on the server, removing it, and navigating to signin', async () => {
+        vi.mocked(axios.post).mockResolvedValue({ data: { message: 'Logged out' } })
         const user = userEvent.setup()
         render(<Dashboard />)
 
         await user.click(screen.getByRole('button', { name: 'Logout' }))
 
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith('/signin', { replace: true })
+        })
+        expect(axios.post).toHaveBeenCalledWith(
+            expect.stringMatching(/\/api\/v1\/logout$/),
+            {},
+            expect.objectContaining({
+                headers: { Authorization: 'Bearer test-token' },
+            }),
+        )
         expect(localStorage.getItem('token')).toBeNull()
-        expect(mockNavigate).toHaveBeenCalledWith('/signin')
+    })
+
+    it('still logs out locally when the server logout request fails', async () => {
+        vi.mocked(axios.post).mockRejectedValue(new Error('Network Error'))
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const user = userEvent.setup()
+        render(<Dashboard />)
+
+        await user.click(screen.getByRole('button', { name: 'Logout' }))
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith('/signin', { replace: true })
+        })
+        expect(localStorage.getItem('token')).toBeNull()
+        consoleError.mockRestore()
+    })
+
+    it('loads the signed-in username into the sidebar', async () => {
+        render(<Dashboard />)
+
+        expect(await screen.findByText('User: testuser')).toBeInTheDocument()
+        expect(axios.get).toHaveBeenCalledWith(
+            expect.stringMatching(/\/api\/v1\/me$/),
+            { headers: { Authorization: 'Bearer test-token' } },
+        )
     })
 
     it('shows no demo banner for a normal account', () => {
@@ -296,7 +339,10 @@ describe('Dashboard component', () => {
 
         await user.click(screen.getByRole('button', { name: 'Logout' }))
 
-        expect(localStorage.getItem('guestExpiresAt')).toBeNull()
+        // Logout waits for the server call before clearing local state.
+        await waitFor(() => {
+            expect(localStorage.getItem('guestExpiresAt')).toBeNull()
+        })
     })
 
     it('sends the favorite update with the authentication token', async () => {

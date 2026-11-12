@@ -232,6 +232,67 @@
   overflow-y: auto;
 }
 
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--mindvault-border);
+  padding-top: 0.75rem;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.4rem 0.75rem 0.6rem;
+}
+
+.sidebar-user-avatar {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #eeebff;
+  color: #5140c9;
+  font-weight: 700;
+}
+
+.sidebar-user-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.sidebar-user-label {
+  color: var(--mindvault-muted);
+  font-size: 0.75rem;
+}
+
+.sidebar-user-name {
+  overflow: hidden;
+  color: var(--mindvault-ink);
+  font-size: 0.925rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-logout {
+  color: #b42318;
+}
+
+.sidebar-logout:hover:not(:disabled) {
+  background: #fef3f2;
+}
+
+.sidebar-logout:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .sidebar-item {
   min-height: 2.75rem;
   max-width: 100%;
