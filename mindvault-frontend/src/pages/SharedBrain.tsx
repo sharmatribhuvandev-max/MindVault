@@ -3,26 +3,20 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { BACKEND_URL } from "../config";
 import { Card } from "../components/Card";
-
-type SharedContentType = "twitter" | "youtube";
+import { isContentType, type ContentType } from "../contentTypes";
 
 interface SharedContent {
     _id: string;
     title: string;
     link: string;
-    type: SharedContentType;
+    type: ContentType;
+    body?: string;
     tags?: string[];
 }
 
 interface SharedBrainResponse {
     username: string;
     content: SharedContent[];
-}
-
-function isValidContentType(
-    type: unknown
-): type is SharedContentType {
-    return type === "twitter" || type === "youtube";
 }
 
 function isValidSharedContent(
@@ -38,7 +32,8 @@ function isValidSharedContent(
         typeof item._id === "string" &&
         typeof item.title === "string" &&
         typeof item.link === "string" &&
-        isValidContentType(item.type)
+        (item.body === undefined || typeof item.body === "string") &&
+        isContentType(item.type)
     );
 }
 
@@ -210,6 +205,7 @@ export function SharedBrain() {
                                     type={item.type}
                                     link={item.link}
                                     title={item.title}
+                                    body={item.body || ""}
                                     onDelete={async () => { }}
                                     isDeleting={false}
                                     onEdit={() => { }}

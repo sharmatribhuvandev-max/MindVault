@@ -78,7 +78,7 @@ describe('CreateContentModal component', () => {
     ).toBeInTheDocument()
 
     expect(screen.getByPlaceholderText('Title')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Link')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Paste a link')).toBeInTheDocument()
 
     await waitFor(() => {
       expect(axios.get).toHaveBeenCalledTimes(2)
@@ -187,7 +187,7 @@ describe('CreateContentModal component', () => {
       target: { value: 'Test video' },
     })
 
-    fireEvent.change(screen.getByPlaceholderText('Link'), {
+    fireEvent.change(screen.getByPlaceholderText('Paste a link'), {
       target: { value: 'not-a-valid-url' },
     })
 
@@ -218,14 +218,14 @@ describe('CreateContentModal component', () => {
       target: { value: '  Test video  ' },
     })
 
-    fireEvent.change(screen.getByPlaceholderText('Link'), {
+    fireEvent.change(screen.getByPlaceholderText('Paste a link'), {
       target: {
         value: ' https://www.youtube.com/watch?v=dQw4w9WgXcQ ',
       },
     })
 
     fireEvent.change(
-      screen.getByPlaceholderText('Add personal notes (optional)'),
+      screen.getByPlaceholderText('Only you can see these (optional)'),
       {
         target: { value: '  Important notes  ' },
       },
@@ -270,7 +270,7 @@ describe('CreateContentModal component', () => {
     )
 
     const twitterButton = screen.getByRole('button', {
-      name: 'Twitter',
+      name: 'Twitter / X',
     })
 
     await user.click(twitterButton)
@@ -322,11 +322,11 @@ describe('CreateContentModal component', () => {
     expect(screen.getByPlaceholderText('Title'))
       .toHaveValue('Existing video')
 
-    expect(screen.getByPlaceholderText('Link'))
+    expect(screen.getByPlaceholderText('Paste a link'))
       .toHaveValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
 
     expect(
-      screen.getByPlaceholderText('Add personal notes (optional)')
+      screen.getByPlaceholderText('Only you can see these (optional)')
     ).toHaveValue('Existing notes')
 
     await userEvent.setup().click(
@@ -356,5 +356,139 @@ describe('CreateContentModal component', () => {
 
     expect(onUpdated).toHaveBeenCalledTimes(1)
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  function typeButton(name: string) {
+    return screen.getByRole('button', { name })
+  }
+
+  const SELECTED = 'bg-[var(--purple-600)]'
+
+  it.each([
+    ['https://youtu.be/dQw4w9WgXcQ', 'YouTube'],
+    ['https://x.com/someone/status/123', 'Twitter / X'],
+    ['https://blog.example.com/post', 'Article'],
+  ])('detects the type from %s', (url, label) => {
+    render(<CreateContentModal open onClose={vi.fn()} />)
+
+    fireEvent.change(screen.getByPlaceholderText('Paste a link'), {
+      target: { value: url },
+    })
+
+    expect(typeButton(label)).toHaveClass(SELECTED)
+    expect(
+      screen.getByText(`Detected ${label} from the link.`),
+    ).toBeInTheDocument()
+  })
+
+  it('does not override a type the user picked', async () => {
+    const user = userEvent.setup()
+    render(<CreateContentModal open onClose={vi.fn()} />)
+
+    await user.click(typeButton('Article'))
+
+    fireEvent.change(screen.getByPlaceholderText('Paste a link'), {
+      target: { value: 'https://youtu.be/dQw4w9WgXcQ' },
+    })
+
+    expect(typeButton('Article')).toHaveClass(SELECTED)
+    expect(typeButton('YouTube')).not.toHaveClass(SELECTED)
+  })
+
+  it('does not change the type of an item being edited', () => {
+    render(
+      <CreateContentModal
+        open
+        onClose={vi.fn()}
+        editContent={{
+          id: 'content-1',
+          title: 'Saved as article',
+          link: 'https://example.com',
+          type: 'article',
+          tags: [],
+          notes: '',
+          collectionId: null,
+        }}
+      />,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Paste a link'), {
+      target: { value: 'https://youtu.be/dQw4w9WgXcQ' },
+    })
+
+    expect(typeButton('Article')).toHaveClass(SELECTED)
+  })
+
+  it('creates a note without a link', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(<CreateContentModal open onClose={onClose} />)
+
+    await user.click(typeButton('Note'))
+
+    expect(screen.getByText('Link (optional)')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByPlaceholderText('Title'), {
+      target: { value: 'Idea' },
+    })
+    fireEvent.change(screen.getByLabelText(/^Note/), {
+      target: { value: '  Build a reading list  ' },
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Add content' }))
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringMatching(/\/api\/v1\/content$/),
+        expect.objectContaining({
+          title: 'Idea',
+          type: 'note',
+          link: '',
+          body: 'Build a reading list',
+        }),
+        expect.anything(),
+      )
+    })
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('requires text in a note', async () => {
+    const user = userEvent.setup()
+    render(<CreateContentModal open onClose={vi.fn()} />)
+
+    await user.click(typeButton('Note'))
+    fireEvent.change(screen.getByPlaceholderText('Title'), {
+      target: { value: 'Empty idea' },
+    })
+
+    fireEvent.submit(
+      screen.getByRole('button', { name: 'Add content' }).closest('form')!,
+    )
+
+    expect(
+      await screen.findByText('Write something in your note.'),
+    ).toBeInTheDocument()
+    expect(axios.post).not.toHaveBeenCalled()
+  })
+
+  it('does not send a body for non-note types', async () => {
+    const user = userEvent.setup()
+    render(<CreateContentModal open onClose={vi.fn()} />)
+
+    fireEvent.change(screen.getByPlaceholderText('Title'), {
+      target: { value: 'Post' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('Paste a link'), {
+      target: { value: 'https://blog.example.com/post' },
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Add content' }))
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalled()
+    })
+    const payload = vi.mocked(axios.post).mock.calls[0]?.[1] as Record<string, unknown>
+    expect(payload.type).toBe('article')
+    expect(payload).not.toHaveProperty('body')
   })
 })

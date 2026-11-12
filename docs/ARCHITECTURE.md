@@ -44,7 +44,7 @@ Because browser `localStorage` is accessible to JavaScript running on the page, 
 
 ## Saved content and organization
 
-- Content records support `youtube` and `twitter` types, an HTTP(S) link, title, tags, optional collection association, notes, favorite state, and pinned state.
+- Content records support `youtube`, `twitter`, `article` and `note` types, an HTTP(S) link (optional for notes), title, a note `body`, tags, optional collection association, private notes, favorite state, and pinned state. The type list lives in `mindvault-backend/src/content-types.ts` and `mindvault-frontend/src/contentTypes.ts`.
 - Tags and collections are scoped to the owning user. Controller checks validate that supplied tag/collection IDs belong to that user.
 - Content update/delete/favorite/pin operations check ownership before modifying records.
 - Deleting a tag removes that tag from the user's content; deleting a collection clears its association from the user's content.

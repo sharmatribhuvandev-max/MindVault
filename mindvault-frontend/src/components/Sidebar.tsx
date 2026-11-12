@@ -2,16 +2,19 @@ import { useEffect } from "react";
 
 import { BrainIcon } from "../icons/BrainIcon";
 import { LogoutIcon } from "../icons/LogoutIcon";
-import { TwitterIcon } from "../icons/TwitterIcon";
-import { YouTubeIcon } from "../icons/YoutubeIcon";
+import {
+    CONTENT_TYPES,
+    CONTENT_TYPE_LABELS,
+    type ContentType,
+} from "../contentTypes";
+import { ContentTypeIcon } from "./ContentTypeIcon";
 import { SidebarItem } from "./SidebarItem";
 
 type ContentFilter =
     | "all"
     | "favorites"
     | "pinned"
-    | "twitter"
-    | "youtube";
+    | ContentType;
 
 interface Collection {
     _id: string;
@@ -104,19 +107,15 @@ export function Sidebar({
                         onClick={() => selectType("all")}
                     />
 
-                    <SidebarItem
-                        text="Twitter / X"
-                        icon={<TwitterIcon />}
-                        active={selectedType === "twitter" && selectedCollectionId === null}
-                        onClick={() => selectType("twitter")}
-                    />
-
-                    <SidebarItem
-                        text="YouTube"
-                        icon={<YouTubeIcon />}
-                        active={selectedType === "youtube" && selectedCollectionId === null}
-                        onClick={() => selectType("youtube")}
-                    />
+                    {CONTENT_TYPES.map((type) => (
+                        <SidebarItem
+                            key={type}
+                            text={CONTENT_TYPE_LABELS[type]}
+                            icon={<ContentTypeIcon type={type} />}
+                            active={selectedType === type && selectedCollectionId === null}
+                            onClick={() => selectType(type)}
+                        />
+                    ))}
 
                     {collections.length > 0 && (
                         <section className="sidebar-collections" aria-labelledby="sidebar-collections-heading">

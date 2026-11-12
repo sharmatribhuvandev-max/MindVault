@@ -113,7 +113,7 @@ describe("Mind Vault content API", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.message).toBe(
-            "Content type must be youtube or twitter",
+            "Content type must be one of: youtube, twitter, article, note",
         );
         expect(ContentModel.create).not.toHaveBeenCalled();
     });
@@ -205,5 +205,143 @@ describe("Mind Vault content API", () => {
             "isFavorite must be a boolean",
         );
         expect(ContentModel.findOne).not.toHaveBeenCalled();
+    });
+
+    function savedContent() {
+        return vi.mocked(ContentModel.create).mock.calls[0]?.[0] as
+            | { type: string; link: string; body: string }
+            | undefined;
+    }
+
+    it("creates an article with a link", async () => {
+        vi.mocked(ContentModel.create).mockResolvedValue({} as never);
+
+        const response = await authenticatedRequest().send({
+            title: "Great post",
+            link: "https://blog.example.com/post",
+            type: "article",
+        });
+
+        expect(response.status).toBe(200);
+        expect(savedContent()?.type).toBe("article");
+        expect(savedContent()?.link).toBe("https://blog.example.com/post");
+    });
+
+    it("rejects an article without a link", async () => {
+        const response = await authenticatedRequest().send({
+            title: "Great post",
+            type: "article",
+        });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe(
+            "A valid HTTP or HTTPS link is required",
+        );
+        expect(ContentModel.create).not.toHaveBeenCalled();
+    });
+
+    it("creates a note without a link", async () => {
+        vi.mocked(ContentModel.create).mockResolvedValue({} as never);
+
+        const response = await authenticatedRequest().send({
+            title: "Idea",
+            type: "note",
+            body: "  Build a reading list feature  ",
+        });
+
+        expect(response.status).toBe(200);
+        expect(savedContent()).toMatchObject({
+            type: "note",
+            link: "",
+            body: "Build a reading list feature",
+        });
+    });
+
+    it("keeps an optional link on a note", async () => {
+        vi.mocked(ContentModel.create).mockResolvedValue({} as never);
+
+        const response = await authenticatedRequest().send({
+            title: "Idea",
+            type: "note",
+            body: "See this",
+            link: "https://example.com/source",
+        });
+
+        expect(response.status).toBe(200);
+        expect(savedContent()?.link).toBe("https://example.com/source");
+    });
+
+    it("rejects a note with an invalid optional link", async () => {
+        const response = await authenticatedRequest().send({
+            title: "Idea",
+            type: "note",
+            body: "See this",
+            link: "javascript:alert(1)",
+        });
+
+        expect(response.status).toBe(400);
+        expect(ContentModel.create).not.toHaveBeenCalled();
+    });
+
+    it("rejects a note without text", async () => {
+        const response = await authenticatedRequest().send({
+            title: "Idea",
+            type: "note",
+            body: "   ",
+        });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe("A note needs some text");
+        expect(ContentModel.create).not.toHaveBeenCalled();
+    });
+
+    it("rejects a note body over 5000 characters", async () => {
+        const response = await authenticatedRequest().send({
+            title: "Idea",
+            type: "note",
+            body: "a".repeat(5001),
+        });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe(
+            "Body cannot exceed 5000 characters",
+        );
+    });
+
+    it("rejects changing an empty item into a note without text", async () => {
+        vi.mocked(ContentModel.findOne).mockResolvedValue({
+            body: "",
+            save: vi.fn(),
+        } as never);
+
+        const response = await request(app)
+            .put("/api/v1/content/507f1f77bcf86cd799439012")
+            .set("Authorization", `Bearer ${getAuthToken()}`)
+            .send({ title: "Now a note", type: "note" });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe("A note needs some text");
+    });
+
+    it("keeps the existing body when an update doesn't send one", async () => {
+        const save = vi.fn();
+        const existing = { body: "Original text", save } as Record<string, unknown>;
+        vi.mocked(ContentModel.findOne).mockResolvedValue(existing as never);
+
+        const query = {
+            populate: vi.fn(() => query),
+            then: (resolve: (value: unknown) => unknown) => resolve(existing),
+        };
+        vi.mocked(ContentModel.findById).mockReturnValue(query as never);
+
+        const response = await request(app)
+            .put("/api/v1/content/507f1f77bcf86cd799439012")
+            .set("Authorization", `Bearer ${getAuthToken()}`)
+            .send({ title: "Renamed note", type: "note" });
+
+        expect(response.status).toBe(200);
+        expect(existing.body).toBe("Original text");
+        expect(existing.link).toBe("");
+        expect(save).toHaveBeenCalled();
     });
 });

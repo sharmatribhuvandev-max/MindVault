@@ -19,6 +19,12 @@ import { BACKEND_URL } from "../config";
 
 import { useNavigate } from "react-router-dom";
 
+import {
+    CONTENT_TYPES,
+    CONTENT_TYPE_LABELS,
+    isContentType,
+} from "../contentTypes";
+
 import type {
     Collection,
     Content,
@@ -223,6 +229,9 @@ export default function Dashboard() {
                         .toLowerCase()
                         .includes(query) ||
                     (content.notes || "")
+                        .toLowerCase()
+                        .includes(query) ||
+                    (content.body || "")
                         .toLowerCase()
                         .includes(query);
 
@@ -716,6 +725,7 @@ export default function Dashboard() {
             type: content.type,
             tags: content.tags || [],
             notes: content.notes || "",
+            body: content.body || "",
             isFavorite: content.isFavorite,
             isPinned: content.isPinned,
             collectionId: content.collectionId,
@@ -790,22 +800,12 @@ export default function Dashboard() {
             };
         }
 
-        if (selectedType === "youtube") {
-            return {
-                title:
-                    "No YouTube content found.",
-                message:
-                    "Try adding some YouTube content.",
-                showAddButton: false,
-            };
-        }
+        if (isContentType(selectedType)) {
+            const label = CONTENT_TYPE_LABELS[selectedType];
 
-        if (selectedType === "twitter") {
             return {
-                title:
-                    "No Twitter content found.",
-                message:
-                    "Try adding some Twitter content.",
+                title: `No ${label} content found.`,
+                message: `Try adding some ${label} content.`,
                 showAddButton: false,
             };
         }
@@ -881,6 +881,8 @@ export default function Dashboard() {
                                         editingContent.tags,
                                     notes:
                                         editingContent.notes || "",
+                                    body:
+                                        editingContent.body || "",
                                     collectionId:
                                         typeof editingContent.collectionId ===
                                             "string"
@@ -1002,35 +1004,21 @@ export default function Dashboard() {
                             All
                         </button>
 
-                        <button
-                            onClick={() =>
-                                setSelectedType(
-                                    "youtube"
-                                )
-                            }
-                            className={`px-4 py-2 rounded-md border ${selectedType ===
-                                "youtube"
-                                ? "bg-black text-white"
-                                : "bg-white text-gray-700"
-                                }`}
-                        >
-                            YouTube
-                        </button>
-
-                        <button
-                            onClick={() =>
-                                setSelectedType(
-                                    "twitter"
-                                )
-                            }
-                            className={`px-4 py-2 rounded-md border ${selectedType ===
-                                "twitter"
-                                ? "bg-black text-white"
-                                : "bg-white text-gray-700"
-                                }`}
-                        >
-                            Twitter
-                        </button>
+                        {CONTENT_TYPES.map((type) => (
+                            <button
+                                key={type}
+                                onClick={() =>
+                                    setSelectedType(type)
+                                }
+                                className={`px-4 py-2 rounded-md border ${selectedType ===
+                                    type
+                                    ? "bg-black text-white"
+                                    : "bg-white text-gray-700"
+                                    }`}
+                            >
+                                {CONTENT_TYPE_LABELS[type]}
+                            </button>
+                        ))}
 
                         <button
                             onClick={() =>
@@ -1073,6 +1061,7 @@ export default function Dashboard() {
                                     link,
                                     title,
                                     notes,
+                                    body,
                                     isFavorite,
                                     isPinned,
                                 }: Content) => (
@@ -1083,6 +1072,7 @@ export default function Dashboard() {
                                         link={link}
                                         title={title}
                                         notes={notes || ""}
+                                        body={body || ""}
                                         isFavorite={
                                             isFavorite
                                         }

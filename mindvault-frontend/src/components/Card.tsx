@@ -1,13 +1,16 @@
 import { useEffect, useRef } from "react";
 
 import { ShareIcon } from "../icons/ShareIcon";
+import { ArticleIcon } from "../icons/ArticleIcon";
+import { getDisplayDomain, type ContentType } from "../contentTypes";
 
 interface CardProps {
     id: string;
     title: string;
     link: string;
-    type: "twitter" | "youtube";
+    type: ContentType;
     notes?: string;
+    body?: string;
     isFavorite?: boolean;
     isPinned?: boolean;
 
@@ -107,6 +110,7 @@ export function Card({
     link,
     type,
     notes = "",
+    body = "",
     isFavorite = false,
     isPinned = false,
     onFavorite,
@@ -273,18 +277,20 @@ export function Card({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-                        <div className="text-slate-500">
-                            <a
-                                href={link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label={`Open ${title} in a new tab`}
-                                title="Open original link"
-                                className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                            >
-                                <ShareIcon />
-                            </a>
-                        </div>
+                        {link && (
+                            <div className="text-slate-500">
+                                <a
+                                    href={link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`Open ${title} in a new tab`}
+                                    title="Open original link"
+                                    className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                >
+                                    <ShareIcon />
+                                </a>
+                            </div>
+                        )}
 
                         {!isPublic && (
                             <>
@@ -465,6 +471,34 @@ export function Card({
                                 </a>
                             </div>
                         )}
+
+                    {type === "article" && (
+                        <a
+                            href={link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:p-4"
+                        >
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 [&_svg]:h-5 [&_svg]:w-5" aria-hidden="true">
+                                <ArticleIcon />
+                            </span>
+
+                            <span className="min-w-0">
+                                <span className="block truncate text-sm font-medium text-slate-900">
+                                    {getDisplayDomain(link) ?? link}
+                                </span>
+                                <span className="block text-sm text-indigo-700">
+                                    Read article →
+                                </span>
+                            </span>
+                        </a>
+                    )}
+
+                    {type === "note" && (
+                        <p className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-amber-50 p-3 text-sm leading-relaxed text-slate-800 sm:p-4">
+                            {body}
+                        </p>
+                    )}
 
                     {type === "twitter" &&
                         twitterUrlType ===
