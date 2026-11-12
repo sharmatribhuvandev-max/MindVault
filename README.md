@@ -4,6 +4,8 @@ Mind Vault is a full-stack personal knowledge dashboard for saving useful links,
 
 Live frontend: <https://mindvault-ruddy.vercel.app>
 
+**Try it without signing up:** <https://mindvault-ruddy.vercel.app/guest> opens a demo account with sample content. Guest accounts are private to each visitor and are deleted after 24 hours.
+
 ## Project layout
 
 ```text
@@ -19,7 +21,7 @@ Live frontend: <https://mindvault-ruddy.vercel.app>
 
 ## Features
 
-- Sign up and sign in using a username and password.
+- Sign up and sign in using a username and password, or continue as a guest with a temporary demo account.
 - Save YouTube videos, Twitter/X posts, GitHub repos and profiles, Instagram and LinkedIn posts, articles from any site, and plain-text notes. The type is detected automatically from the pasted link.
 - Edit saved items and organize them with tags and collections.
 - Add private notes to saved items.

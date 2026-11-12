@@ -20,6 +20,21 @@ export const signinLimiter = rateLimit({
 });
 
 /**
+ * Limits guest (demo) account creation per IP. Each guest account is
+ * seeded with sample content, so this also caps database writes.
+ */
+export const guestLimiter = rateLimit({
+    windowMs: ONE_HOUR,
+    limit: 10,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message:
+            "Too many guest sessions from this network. Please try again later.",
+    },
+});
+
+/**
  * Limits account creation per IP to curb automated sign-ups.
  */
 export const signupLimiter = rateLimit({

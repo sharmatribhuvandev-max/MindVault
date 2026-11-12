@@ -3,7 +3,9 @@ import axios from "axios";
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { GuestButton } from "../components/GuestButton";
 import { Input } from "../components/Input";
+import { clearGuestSession } from "../guestSession";
 import { BACKEND_URL } from "../config";
 
 export function Signin() {
@@ -55,6 +57,7 @@ export function Signin() {
             }
 
             localStorage.setItem("token", token);
+            clearGuestSession();
             navigate("/dashboard");
         } catch (error: unknown) {
             if (axios.isAxiosError<{ message?: string }>(error)) {
@@ -132,6 +135,8 @@ export function Signin() {
                         {loading ? "Signing in…" : "Sign in"}
                     </button>
                 </form>
+
+                <GuestButton />
 
                 <p className="mt-6 text-center text-sm text-[var(--mindvault-muted)]">
                     Don&apos;t have an account?{" "}

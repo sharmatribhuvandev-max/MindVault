@@ -26,6 +26,13 @@ export async function signup(
         });
     }
 
+    // "guest-" names are reserved for temporary demo accounts.
+    if (username.trim().toLowerCase().startsWith("guest-")) {
+        return res.status(400).json({
+            message: "Usernames starting with \"guest-\" are reserved",
+        });
+    }
+
     // Validate password
     if (
         typeof password !== "string" ||
