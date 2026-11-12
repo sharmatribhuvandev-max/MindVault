@@ -15,6 +15,11 @@ describe('detectContentType', () => {
     ['  https://X.com/user  ', 'twitter'],
     ['https://medium.com/@a/post', 'article'],
     ['http://example.org', 'article'],
+    ['https://github.com/facebook/react', 'github'],
+    ['https://www.instagram.com/p/ABC123/', 'instagram'],
+    ['https://www.linkedin.com/in/someone', 'linkedin'],
+    ['https://in.linkedin.com/in/someone', 'linkedin'],
+    ['https://lnkd.in/abc', 'linkedin'],
   ])('%s -> %s', (url, expected) => {
     expect(detectContentType(url)).toBe(expected)
   })
@@ -32,6 +37,7 @@ describe('detectContentType', () => {
 
   it('does not treat look-alike hosts as YouTube', () => {
     expect(detectContentType('https://notyoutube.com/watch?v=x')).toBe('article')
+    expect(detectContentType('https://evil-linkedin.com/in/x')).toBe('article')
   })
 })
 

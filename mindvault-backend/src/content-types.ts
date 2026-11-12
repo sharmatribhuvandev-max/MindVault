@@ -5,6 +5,9 @@ export const CONTENT_TYPES = [
     "twitter",
     "article",
     "note",
+    "github",
+    "instagram",
+    "linkedin",
 ] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number];

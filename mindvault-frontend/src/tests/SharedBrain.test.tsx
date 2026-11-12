@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import axios from 'axios'
 import { SharedBrain } from '../pages/SharedBrain'
@@ -53,7 +53,10 @@ describe('SharedBrain page', () => {
         ).toBeInTheDocument()
         expect(screen.getByText('T')).toBeInTheDocument()
         expect(screen.getByText(/Shared by/)).toHaveTextContent('Shared by tribhuvan · 2 items')
-        expect(document.title).toBe("tribhuvan's Brain · Mind Vault")
+        // The title is set in an effect that can run just after the heading renders.
+        await waitFor(() => {
+            expect(document.title).toBe("tribhuvan's Brain · Mind Vault")
+        })
         expect(axios.get).toHaveBeenCalledWith(expect.stringMatching(/\/api\/v1\/abc123$/))
     })
 

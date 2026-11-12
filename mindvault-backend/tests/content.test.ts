@@ -113,7 +113,7 @@ describe("Mind Vault content API", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.message).toBe(
-            "Content type must be one of: youtube, twitter, article, note",
+            "Content type must be one of: youtube, twitter, article, note, github, instagram, linkedin",
         );
         expect(ContentModel.create).not.toHaveBeenCalled();
     });

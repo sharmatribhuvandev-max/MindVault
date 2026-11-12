@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Card } from '../components/Card'
+import { clearGitHubRepoCache } from '../githubRepo'
 
 afterEach(() => {
   cleanup()
@@ -221,5 +222,126 @@ describe('Card component', () => {
     )
 
     expect(screen.getByText('Shared idea')).toBeInTheDocument()
+  })
+
+  describe('embeds', () => {
+    beforeEach(() => {
+      clearGitHubRepoCache()
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('shows GitHub repository details from the API', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          full_name: 'facebook/react',
+          description: 'The library for web and native user interfaces.',
+          stargazers_count: 230500,
+          language: 'JavaScript',
+        }),
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      render(
+        <Card {...defaultProps} type="github" link="https://github.com/facebook/react" />,
+      )
+
+      expect(
+        await screen.findByText('The library for web and native user interfaces.'),
+      ).toBeInTheDocument()
+      expect(screen.getByLabelText('230500 stars')).toHaveTextContent('231k')
+      expect(screen.getByText('JavaScript')).toBeInTheDocument()
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.github.com/repos/facebook/react',
+        expect.anything(),
+      )
+    })
+
+    it('falls back to owner/repo when the GitHub API fails', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) })
+      vi.stubGlobal('fetch', fetchMock)
+
+      render(
+        <Card {...defaultProps} type="github" link="https://github.com/acme/widget" />,
+      )
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+      expect(screen.getByText('acme/widget')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /View repository/ }))
+        .toHaveAttribute('href', 'https://github.com/acme/widget')
+    })
+
+    it('shows a GitHub profile card without calling the API', () => {
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+
+      render(
+        <Card {...defaultProps} type="github" link="https://github.com/torvalds" />,
+      )
+
+      expect(screen.getByText('torvalds')).toBeInTheDocument()
+      expect(screen.getByText(/View GitHub profile/)).toBeInTheDocument()
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('embeds an Instagram post', () => {
+      render(
+        <Card
+          {...defaultProps}
+          type="instagram"
+          link="https://www.instagram.com/p/ABC123/"
+        />,
+      )
+
+      expect(screen.getByTitle(defaultProps.title)).toHaveAttribute(
+        'src',
+        'https://www.instagram.com/p/ABC123/embed',
+      )
+      expect(screen.getByText('Not loading? Open on Instagram')).toBeInTheDocument()
+    })
+
+    it('shows a link card for an Instagram profile', () => {
+      render(
+        <Card
+          {...defaultProps}
+          type="instagram"
+          link="https://www.instagram.com/someone/"
+        />,
+      )
+
+      expect(screen.queryByTitle(defaultProps.title)).not.toBeInTheDocument()
+      expect(screen.getByText(/Open on Instagram/)).toBeInTheDocument()
+    })
+
+    it('embeds a LinkedIn post', () => {
+      render(
+        <Card
+          {...defaultProps}
+          type="linkedin"
+          link="https://www.linkedin.com/posts/jane_title-activity-7123456789012345678-AbCd"
+        />,
+      )
+
+      expect(screen.getByTitle(defaultProps.title)).toHaveAttribute(
+        'src',
+        'https://www.linkedin.com/embed/feed/update/urn:li:activity:7123456789012345678',
+      )
+    })
+
+    it('shows a link card for a LinkedIn profile', () => {
+      render(
+        <Card
+          {...defaultProps}
+          type="linkedin"
+          link="https://www.linkedin.com/in/jane-doe"
+        />,
+      )
+
+      expect(screen.getByText('LinkedIn profile')).toBeInTheDocument()
+      expect(screen.getByText(/Open on LinkedIn/)).toBeInTheDocument()
+    })
   })
 })
