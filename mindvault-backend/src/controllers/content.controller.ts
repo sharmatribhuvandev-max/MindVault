@@ -7,6 +7,13 @@ import {
     ContentModel,
     TagModel,
 } from "../db.js";
+import {
+    CONTENT_TYPES,
+    NOTE_BODY_MAX_LENGTH,
+    isContentType,
+    requiresLink,
+    type ContentType,
+} from "../content-types.js";
 
 // Accept only valid HTTP or HTTPS URLs.
 function isValidHttpUrl(value: unknown): value is string {
@@ -26,6 +33,75 @@ function isValidHttpUrl(value: unknown): value is string {
     }
 }
 
+type CoreFieldsResult =
+    | {
+        ok: true;
+        title: string;
+        type: ContentType;
+        link: string;
+        body: string | undefined;
+    }
+    | { ok: false; message: string };
+
+// Validates the fields shared by create and update: title, type, link
+// and body. `body` is undefined when it wasn't sent.
+function validateCoreFields(input: {
+    title: unknown;
+    type: unknown;
+    link: unknown;
+    body: unknown;
+}): CoreFieldsResult {
+    const { title, type, link, body } = input;
+
+    if (typeof title !== "string" || title.trim() === "") {
+        return { ok: false, message: "Title is required" };
+    }
+
+    if (!isContentType(type)) {
+        return {
+            ok: false,
+            message: `Content type must be one of: ${CONTENT_TYPES.join(", ")}`,
+        };
+    }
+
+    const linkProvided =
+        typeof link === "string" && link.trim() !== "";
+
+    if (requiresLink(type) || linkProvided) {
+        if (!isValidHttpUrl(link)) {
+            return {
+                ok: false,
+                message: "A valid HTTP or HTTPS link is required",
+            };
+        }
+    }
+
+    let validBody: string | undefined;
+
+    if (body !== undefined) {
+        if (typeof body !== "string") {
+            return { ok: false, message: "Body must be a string" };
+        }
+
+        validBody = body.trim();
+
+        if (validBody.length > NOTE_BODY_MAX_LENGTH) {
+            return {
+                ok: false,
+                message: `Body cannot exceed ${NOTE_BODY_MAX_LENGTH} characters`,
+            };
+        }
+    }
+
+    return {
+        ok: true,
+        title: title.trim(),
+        type,
+        link: linkProvided ? (link as string).trim() : "",
+        body: validBody,
+    };
+}
+
 export async function createContent(
     req: Request,
     res: Response
@@ -34,32 +110,23 @@ export async function createContent(
         link,
         type,
         title,
+        body,
         tags,
         collectionId,
         notes,
     } = req.body ?? {};
 
-    // Validate title
-    if (
-        typeof title !== "string" ||
-        title.trim() === ""
-    ) {
+    const core = validateCoreFields({ title, type, link, body });
+
+    if (!core.ok) {
         return res.status(400).json({
-            message: "Title is required",
+            message: core.message,
         });
     }
 
-    // Validate link
-    if (!isValidHttpUrl(link)) {
+    if (core.type === "note" && !core.body) {
         return res.status(400).json({
-            message: "A valid HTTP or HTTPS link is required",
-        });
-    }
-
-    // Validate supported content type
-    if (type !== "youtube" && type !== "twitter") {
-        return res.status(400).json({
-            message: "Content type must be youtube or twitter",
+            message: "A note needs some text",
         });
     }
 
@@ -161,9 +228,10 @@ export async function createContent(
 
     // Create content
     await ContentModel.create({
-        link: link.trim(),
-        type,
-        title: title.trim(),
+        link: core.link,
+        type: core.type,
+        title: core.title,
+        body: core.body ?? "",
         userId,
         tags: tagIds,
         collectionId: validCollectionId,
@@ -214,29 +282,17 @@ export async function updateContent(
         title,
         link,
         type,
+        body,
         tags,
         collectionId,
         notes,
     } = req.body ?? {};
 
-    if (
-        typeof title !== "string" ||
-        title.trim() === ""
-    ) {
-        return res.status(400).json({
-            message: "Title is required",
-        });
-    }
+    const core = validateCoreFields({ title, type, link, body });
 
-    if (!isValidHttpUrl(link)) {
+    if (!core.ok) {
         return res.status(400).json({
-            message: "A valid HTTP or HTTPS link is required",
-        });
-    }
-
-    if (type !== "youtube" && type !== "twitter") {
-        return res.status(400).json({
-            message: "Content type must be youtube or twitter",
+            message: core.message,
         });
     }
 
@@ -275,9 +331,19 @@ export async function updateContent(
         });
     }
 
-    content.title = title.trim();
-    content.link = link.trim();
-    content.type = type;
+    // Body is only replaced when sent; a note must end up with text.
+    const finalBody = core.body ?? content.body ?? "";
+
+    if (core.type === "note" && !finalBody) {
+        return res.status(400).json({
+            message: "A note needs some text",
+        });
+    }
+
+    content.title = core.title;
+    content.link = core.link;
+    content.type = core.type;
+    content.body = finalBody;
 
     // Update notes only when provided
     if (validNotes !== undefined) {

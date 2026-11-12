@@ -20,7 +20,7 @@ Live frontend: <https://mindvault-ruddy.vercel.app>
 ## Features
 
 - Sign up and sign in using a username and password.
-- Save supported YouTube and Twitter/X links.
+- Save YouTube videos, Twitter/X posts, articles from any site, and plain-text notes. The type is detected automatically from the pasted link.
 - Edit saved items and organize them with tags and collections.
 - Add private notes to saved items.
 - Mark items as favorites or pinned.

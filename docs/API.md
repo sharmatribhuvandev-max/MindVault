@@ -36,14 +36,14 @@ All paths below are relative to `/api/v1` and require authentication.
 
 | Method | Path | Purpose | Body / notes |
 |---|---|---|---|
-| `POST` | `/content` | Create content | `title`, `link`, `type`; optional `tags` array, `collectionId`, `notes` |
+| `POST` | `/content` | Create content | `title`, `type`, `link` (not needed for notes); optional `body`, `tags` array, `collectionId`, `notes` |
 | `GET` | `/content` | List the current user's content | Returns `{ "content": [...] }` |
-| `PUT` | `/content/:id` | Update content | `title`, `link`, `type`; optional `tags`, `collectionId`, `notes` |
+| `PUT` | `/content/:id` | Update content | `title`, `type`, `link` (not needed for notes); optional `body`, `tags`, `collectionId`, `notes` |
 | `PATCH` | `/content/:id/favorite` | Set favorite state | `{ "isFavorite": true }` or `false` |
 | `PATCH` | `/content/:id/pin` | Set pinned state | `{ "isPinned": true }` or `false` |
 | `DELETE` | `/content` | Delete content | `{ "contentId": "<content-id>" }` |
 
-Supported `type` values are `youtube` and `twitter`. `link` must be a valid HTTP or HTTPS URL. `title` is required. Notes are optional and limited to 2,000 characters. Tag IDs and collection IDs must belong to the authenticated user. For updates, omitted `notes`, `tags`, or `collectionId` are not all equivalent: consult `content.controller.ts` when implementing partial-update clients.
+Supported `type` values are `youtube`, `twitter`, `article` and `note` (defined in `src/content-types.ts`). `title` is required. `link` must be a valid HTTP or HTTPS URL; it is required for every type except `note`, where it is optional and stored as `""` when omitted. `body` is the text of a note: it is required (non-empty) for `note`, limited to 5,000 characters, and, unlike `notes`, is included on public shared pages. On update, an omitted `body` keeps the existing one. `notes` are private, optional and limited to 2,000 characters. Tag IDs and collection IDs must belong to the authenticated user. For updates, omitted `notes`, `tags`, or `collectionId` are not all equivalent: consult `content.controller.ts` when implementing partial-update clients.
 
 Successful create returns `{ "message": "Content added" }`. Update and state-change endpoints return a message and updated content. Delete returns `{ "message": "Deleted" }`.
 

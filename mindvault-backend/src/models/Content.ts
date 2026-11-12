@@ -1,6 +1,11 @@
 
 import mongoose, { model, Schema } from "mongoose";
 
+import {
+    CONTENT_TYPES,
+    NOTE_BODY_MAX_LENGTH,
+} from "../content-types.js";
+
 const ContentSchema = new Schema(
     {
         title: {
@@ -9,10 +14,21 @@ const ContentSchema = new Schema(
             trim: true,
         },
 
+        // Empty for notes, which don't need a link. The API validates
+        // that every other type has one.
         link: {
             type: String,
-            required: true,
+            default: "",
             trim: true,
+        },
+
+        // The text of a note. Unlike `notes`, this is the content itself
+        // and is included on public shared pages.
+        body: {
+            type: String,
+            default: "",
+            trim: true,
+            maxlength: NOTE_BODY_MAX_LENGTH,
         },
 
         tags: [
@@ -25,7 +41,7 @@ const ContentSchema = new Schema(
         type: {
             type: String,
             required: true,
-            enum: ["youtube", "twitter"],
+            enum: CONTENT_TYPES,
         },
 
         userId: {

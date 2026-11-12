@@ -10,7 +10,14 @@ import { BACKEND_URL } from "../config";
 
 import axios from "axios";
 
-type ContentType = "youtube" | "twitter";
+import {
+    CONTENT_TYPES,
+    CONTENT_TYPE_LABELS,
+    NOTE_BODY_MAX_LENGTH,
+    detectContentType,
+    requiresLink,
+    type ContentType,
+} from "../contentTypes";
 
 interface Tag {
     _id: string;
@@ -29,6 +36,7 @@ interface EditContent {
     type: ContentType;
     tags: Tag[];
     notes: string;
+    body?: string;
     collectionId: string | null;
 }
 
@@ -125,8 +133,45 @@ function ContentModalForm({
     );
 
     const [type, setType] = useState<ContentType>(
-        editContent?.type ?? "youtube"
+        editContent?.type ?? "article"
     );
+
+    const [body, setBody] = useState(
+        editContent?.body || ""
+    );
+
+    // Once the user picks a type themselves (or is editing an existing
+    // item), stop overriding it from the link.
+    const [typeChosenManually, setTypeChosenManually] =
+        useState(editContent !== null);
+
+    const [typeWasDetected, setTypeWasDetected] =
+        useState(false);
+
+    function handleLinkChange(value: string) {
+        setLink(value);
+
+        if (typeChosenManually) {
+            return;
+        }
+
+        const detected = detectContentType(value);
+
+        if (detected) {
+            setType(detected);
+            setTypeWasDetected(true);
+        } else {
+            setTypeWasDetected(false);
+        }
+    }
+
+    function chooseType(nextType: ContentType) {
+        setType(nextType);
+        setTypeChosenManually(true);
+        setTypeWasDetected(false);
+    }
+
+    const linkRequired = requiresLink(type);
 
     const [tags, setTags] = useState<Tag[]>([]);
 
@@ -415,26 +460,37 @@ function ContentModalForm({
 
     async function submitContent() {
 
-        if (!title.trim() || !link.trim()) {
-            setError("Title and link are required.");
+        if (!title.trim() || (linkRequired && !link.trim())) {
+            setError(
+                linkRequired
+                    ? "Title and link are required."
+                    : "Title is required."
+            );
             return;
         }
 
-        let parsedLink: URL;
+        if (link.trim()) {
+            let parsedLink: URL;
 
-        try {
-            parsedLink = new URL(link.trim());
-        } catch {
-            setError("Please enter a valid URL, including https:// or http://.");
-            return;
+            try {
+                parsedLink = new URL(link.trim());
+            } catch {
+                setError("Please enter a valid URL, including https:// or http://.");
+                return;
+            }
+
+            if (
+                (parsedLink.protocol !== "http:" &&
+                    parsedLink.protocol !== "https:") ||
+                !parsedLink.hostname
+            ) {
+                setError("Please enter a valid HTTP or HTTPS URL.");
+                return;
+            }
         }
 
-        if (
-            (parsedLink.protocol !== "http:" &&
-                parsedLink.protocol !== "https:") ||
-            !parsedLink.hostname
-        ) {
-            setError("Please enter a valid HTTP or HTTPS URL.");
+        if (type === "note" && !body.trim()) {
+            setError("Write something in your note.");
             return;
         }
 
@@ -470,6 +526,7 @@ function ContentModalForm({
                         title: title.trim(),
                         link: link.trim(),
                         type,
+                        ...(type === "note" && { body: body.trim() }),
                         tags: tagIds,
                         notes: notes.trim(),
                         collectionId,
@@ -491,6 +548,7 @@ function ContentModalForm({
                         link: link.trim(),
                         title: title.trim(),
                         type,
+                        ...(type === "note" && { body: body.trim() }),
                         tags: tagIds,
                         collectionId,
                         notes: notes.trim(),
@@ -588,21 +646,74 @@ function ContentModalForm({
 
                             <Input
                                 id="content-link"
-                                label="Link"
-                                required
+                                label={linkRequired ? "Link" : "Link (optional)"}
+                                required={linkRequired}
                                 disabled={loading}
                                 value={link}
-                                onChange={(e) => {
-                                    setLink(
-                                        e.target.value
-                                    );
-                                }}
-                                placeholder="Link"
+                                onChange={(e) =>
+                                    handleLinkChange(e.target.value)
+                                }
+                                placeholder="Paste a link"
                             />
+
+                            <div>
+                                <h2 id="content-type-heading" className="text-sm font-semibold text-gray-800">Content type</h2>
+
+                                <div
+                                    className="flex flex-wrap gap-2 pb-1 pt-1"
+                                    role="group"
+                                    aria-labelledby="content-type-heading"
+                                >
+                                    {CONTENT_TYPES.map((option) => (
+                                        <Button
+                                            key={option}
+                                            text={CONTENT_TYPE_LABELS[option]}
+                                            variant={
+                                                type === option
+                                                    ? "primary"
+                                                    : "secondary"
+                                            }
+                                            onClick={() => chooseType(option)}
+                                        />
+                                    ))}
+                                </div>
+
+                                <p className="text-xs text-gray-500" aria-live="polite">
+                                    {typeWasDetected
+                                        ? `Detected ${CONTENT_TYPE_LABELS[type]} from the link.`
+                                        : "Paste a link and the type is picked for you."}
+                                </p>
+                            </div>
+
+                            {type === "note" && (
+                                <div>
+                                    <label htmlFor="content-body" className="mb-1 block text-sm font-semibold text-gray-800">
+                                        Note *
+                                    </label>
+
+                                    <textarea
+                                        id="content-body"
+                                        value={body}
+                                        onChange={(event) =>
+                                            setBody(event.target.value)
+                                        }
+                                        placeholder="Write your note..."
+                                        maxLength={NOTE_BODY_MAX_LENGTH}
+                                        rows={6}
+                                        required
+                                        disabled={loading}
+                                        className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus-visible:border-violet-600 focus-visible:ring-2 focus-visible:ring-violet-600/20 disabled:bg-gray-100"
+                                    />
+
+                                    <div className="mt-1 text-right text-xs text-gray-500">
+                                        {body.length}/{NOTE_BODY_MAX_LENGTH}
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="mt-3">
                                 <label htmlFor="content-notes" className="mb-1 block text-sm font-medium text-gray-800">
-                                    Notes
+                                    Private notes
                                 </label>
 
                                 <textarea
@@ -611,7 +722,7 @@ function ContentModalForm({
                                     onChange={(event) =>
                                         setNotes(event.target.value)
                                     }
-                                    placeholder="Add personal notes (optional)"
+                                    placeholder="Only you can see these (optional)"
                                     maxLength={2000}
                                     rows={4}
                                     disabled={loading}
@@ -620,42 +731,6 @@ function ContentModalForm({
 
                                 <div className="text-xs text-gray-500 text-right mt-1">
                                     {notes.length}/2000
-                                </div>
-                            </div>
-
-                            <div>
-                                <h2 className="text-sm font-semibold text-gray-800">Content type</h2>
-
-                                <div className="flex flex-wrap gap-2 pb-2">
-                                    <Button
-                                        text="Youtube"
-                                        variant={
-                                            type ===
-                                                "youtube"
-                                                ? "primary"
-                                                : "secondary"
-                                        }
-                                        onClick={() => {
-                                            setType(
-                                                "youtube"
-                                            );
-                                        }}
-                                    />
-
-                                    <Button
-                                        text="Twitter"
-                                        variant={
-                                            type ===
-                                                "twitter"
-                                                ? "primary"
-                                                : "secondary"
-                                        }
-                                        onClick={() => {
-                                            setType(
-                                                "twitter"
-                                            );
-                                        }}
-                                    />
                                 </div>
                             </div>
 

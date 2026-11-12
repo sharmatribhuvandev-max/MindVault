@@ -183,4 +183,43 @@ describe('Card component', () => {
     expect(screen.getByRole('link', { name: 'Open Profile' }))
       .toHaveAttribute('href', 'https://x.com/openai')
   })
+
+  it('renders an article with its domain and a link to read it', () => {
+    render(
+      <Card
+        {...defaultProps}
+        type="article"
+        link="https://www.example.com/posts/hello"
+      />,
+    )
+
+    expect(screen.getByText('example.com')).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /Read article/ }),
+    ).toHaveAttribute('href', 'https://www.example.com/posts/hello')
+  })
+
+  it('renders a note body and hides the open-link button when there is no link', () => {
+    render(
+      <Card
+        {...defaultProps}
+        type="note"
+        link=""
+        body={'First line\nSecond line'}
+      />,
+    )
+
+    expect(screen.getByText(/First line/)).toHaveTextContent('First line Second line')
+    expect(
+      screen.queryByRole('link', { name: /Open .* in a new tab/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows a note body on public cards', () => {
+    render(
+      <Card {...defaultProps} type="note" link="" body="Shared idea" isPublic />,
+    )
+
+    expect(screen.getByText('Shared idea')).toBeInTheDocument()
+  })
 })
