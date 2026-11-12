@@ -3,6 +3,12 @@ import { useEffect, useRef } from "react";
 import { ShareIcon } from "../icons/ShareIcon";
 import { ArticleIcon } from "../icons/ArticleIcon";
 import { getDisplayDomain, type ContentType } from "../contentTypes";
+import {
+    GitHubEmbed,
+    InstagramEmbed,
+    LinkCard,
+    LinkedInEmbed,
+} from "./Embeds";
 
 interface CardProps {
     id: string;
@@ -473,25 +479,22 @@ export function Card({
                         )}
 
                     {type === "article" && (
-                        <a
+                        <LinkCard
                             href={link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:p-4"
-                        >
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 [&_svg]:h-5 [&_svg]:w-5" aria-hidden="true">
-                                <ArticleIcon />
-                            </span>
+                            icon={<ArticleIcon />}
+                            primary={getDisplayDomain(link) ?? link}
+                            secondary="Read article →"
+                        />
+                    )}
 
-                            <span className="min-w-0">
-                                <span className="block truncate text-sm font-medium text-slate-900">
-                                    {getDisplayDomain(link) ?? link}
-                                </span>
-                                <span className="block text-sm text-indigo-700">
-                                    Read article →
-                                </span>
-                            </span>
-                        </a>
+                    {type === "github" && <GitHubEmbed link={link} />}
+
+                    {type === "instagram" && (
+                        <InstagramEmbed link={link} title={title} />
+                    )}
+
+                    {type === "linkedin" && (
+                        <LinkedInEmbed link={link} title={title} />
                     )}
 
                     {type === "note" && (

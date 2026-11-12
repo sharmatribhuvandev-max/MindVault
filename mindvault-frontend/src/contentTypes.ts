@@ -5,6 +5,9 @@ export const CONTENT_TYPES = [
     "twitter",
     "article",
     "note",
+    "github",
+    "instagram",
+    "linkedin",
 ] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number];
@@ -14,6 +17,9 @@ export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
     twitter: "Twitter / X",
     article: "Article",
     note: "Note",
+    github: "GitHub",
+    instagram: "Instagram",
+    linkedin: "LinkedIn",
 };
 
 export const NOTE_BODY_MAX_LENGTH = 5000;
@@ -47,6 +53,24 @@ const TWITTER_HOSTS = new Set([
     "www.x.com",
 ]);
 
+const GITHUB_HOSTS = new Set(["github.com", "www.github.com"]);
+
+const INSTAGRAM_HOSTS = new Set([
+    "instagram.com",
+    "www.instagram.com",
+    "m.instagram.com",
+    "instagr.am",
+    "www.instagr.am",
+]);
+
+function isLinkedInHost(host: string): boolean {
+    return (
+        host === "linkedin.com" ||
+        host.endsWith(".linkedin.com") ||
+        host === "lnkd.in"
+    );
+}
+
 // Guess the content type from a URL. Known sites get their own type;
 // any other valid http(s) link is an article. Returns null for text
 // that isn't a usable URL yet (e.g. while the user is still typing).
@@ -74,6 +98,18 @@ export function detectContentType(value: string): ContentType | null {
 
     if (TWITTER_HOSTS.has(host)) {
         return "twitter";
+    }
+
+    if (GITHUB_HOSTS.has(host)) {
+        return "github";
+    }
+
+    if (INSTAGRAM_HOSTS.has(host)) {
+        return "instagram";
+    }
+
+    if (isLinkedInHost(host)) {
+        return "linkedin";
     }
 
     return "article";
