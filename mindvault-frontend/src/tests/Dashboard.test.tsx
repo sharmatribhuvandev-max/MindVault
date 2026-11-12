@@ -262,6 +262,29 @@ describe('Dashboard component', () => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
 
+    it('opens the share dialog with the public link and keeps Share Brain available', async () => {
+        const user = userEvent.setup()
+        render(<Dashboard />)
+
+        await user.click(screen.getByRole('button', { name: 'Share Brain' }))
+
+        const dialog = await screen.findByRole('dialog', { name: 'Share your Brain' })
+        expect(screen.getByLabelText('Share link')).toHaveValue(
+            `${window.location.origin}/share/share123`,
+        )
+        expect(axios.post).toHaveBeenCalledWith(
+            expect.stringMatching(/\/api\/v1\/brain\/share$/),
+            { share: true },
+            { headers: { Authorization: 'Bearer test-token' } },
+        )
+
+        await user.click(screen.getByRole('button', { name: 'Close share dialog' }))
+        expect(dialog).not.toBeInTheDocument()
+
+        expect(screen.getByRole('button', { name: 'Share Brain' })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'Disable Sharing' })).toBeInTheDocument()
+    })
+
     it('logs out by removing the token and navigating to signin', async () => {
         const user = userEvent.setup()
         render(<Dashboard />)
