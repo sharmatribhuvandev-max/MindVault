@@ -409,7 +409,8 @@ describe("Brain sharing API", () => {
             },
         ];
 
-        const select = vi.fn().mockResolvedValue(publicContent);
+        const sort = vi.fn().mockResolvedValue(publicContent);
+        const select = vi.fn().mockReturnValue({ sort });
 
         vi.mocked(ContentModel.find).mockReturnValue({
             select,
@@ -427,6 +428,7 @@ describe("Brain sharing API", () => {
         expect(response.body.username).toBe("publicuser");
         expect(response.body.content).toEqual(publicContent);
         expect(select).toHaveBeenCalledWith("-notes");
+        expect(sort).toHaveBeenCalledWith({ isPinned: -1, createdAt: -1, _id: -1 });
     });
 
     it("returns 404 when the share link is disabled", async () => {

@@ -60,7 +60,41 @@
 }
 
 .dashboard-search-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
   margin-top: 1.75rem;
+}
+
+.dashboard-search-wrap {
+  flex: 1 1 18rem;
+}
+
+.dashboard-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--mindvault-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.dashboard-sort-select {
+  min-height: 3rem;
+  border: 1px solid var(--mindvault-border);
+  border-radius: 0.85rem;
+  background: #fff;
+  padding: 0 0.9rem;
+  color: var(--mindvault-ink);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(31, 35, 65, 0.035);
+}
+
+.dashboard-sort-select:focus-visible {
+  outline: none;
+  border-color: var(--mindvault-focus);
+  box-shadow: 0 0 0 3px rgba(109, 92, 231, 0.12);
 }
 
 .dashboard-search-wrap {

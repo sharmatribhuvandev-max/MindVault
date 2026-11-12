@@ -27,3 +27,11 @@ export function requiresLink(type: ContentType): boolean {
 }
 
 export const NOTE_BODY_MAX_LENGTH = 5000;
+
+// Default order for content lists: pinned first, then newest first.
+// _id breaks ties so the order is stable.
+export const CONTENT_LIST_SORT = {
+    isPinned: -1,
+    createdAt: -1,
+    _id: -1,
+} as const;

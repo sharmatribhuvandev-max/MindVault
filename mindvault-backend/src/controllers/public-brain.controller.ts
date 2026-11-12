@@ -6,6 +6,7 @@ import {
     LinkModel,
     UserModel,
 } from "../db.js";
+import { CONTENT_LIST_SORT } from "../content-types.js";
 
 export async function getPublicBrain(
     req: Request,
@@ -36,7 +37,9 @@ export async function getPublicBrain(
     // Personal notes must never be exposed through public sharing.
     const content = await ContentModel.find({
         userId: link.userId,
-    }).select("-notes");
+    })
+        .select("-notes")
+        .sort(CONTENT_LIST_SORT);
 
     const user = await UserModel.findOne({
         _id: link.userId,

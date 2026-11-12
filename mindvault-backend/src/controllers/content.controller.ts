@@ -8,6 +8,7 @@ import {
     TagModel,
 } from "../db.js";
 import {
+    CONTENT_LIST_SORT,
     CONTENT_TYPES,
     NOTE_BODY_MAX_LENGTH,
     isContentType,
@@ -254,6 +255,7 @@ export async function getContent(
     const content = await ContentModel.find({
         userId,
     })
+        .sort(CONTENT_LIST_SORT)
         .populate("userId", "username")
         .populate("tags", "name")
         .populate("collectionId", "name");

@@ -23,4 +23,5 @@ export interface Content {
     notes?: string;
     body?: string;
     collectionId: string | Collection | null;
+    createdAt?: string;
 }
