@@ -16,6 +16,7 @@ The JWT is issued by sign-in and currently expires after one hour. All user-owne
 |---|---|---|---|
 | `POST` | `/signup` | Public | Create an account |
 | `POST` | `/signin` | Public | Sign in and receive a JWT |
+| `POST` | `/guest` | Public | Create a temporary demo account and receive a JWT |
 
 Signup/signin request body:
 
@@ -29,6 +30,9 @@ Both routes are rate-limited per client IP and return HTTP 429 with a `Retry-Aft
 
 - `/signin`: 10 failed attempts per 15 minutes (successful sign-ins are not counted).
 - `/signup`: 10 requests per hour.
+- `/guest`: 10 requests per hour.
+
+`/guest` takes no body. It creates a `guest-xxxxxxxx` account with a random, never-revealed password, fills it with sample tags, collections and content, and returns `{ "token": "...", "username": "guest-...", "guest": true, "expiresAt": "<ISO date>" }`. Guest accounts expire after 24 hours; each new guest request deletes up to 100 expired guest accounts and all their content, tags, collections and share links. Usernames starting with `guest-` are reserved and rejected by `/signup`.
 
 ## Content
 

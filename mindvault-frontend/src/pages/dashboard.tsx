@@ -17,7 +17,9 @@ import axios from "axios";
 
 import { BACKEND_URL } from "../config";
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+import { clearGuestSession, isGuestSession } from "../guestSession";
 
 import {
     CONTENT_TYPES,
@@ -83,6 +85,8 @@ export default function Dashboard() {
 
     const { contents, refresh, error: contentError } = useContent();
     const navigate = useNavigate();
+
+    const [isGuest] = useState(isGuestSession);
 
     // Returns the user's collections, or null on failure.
     const loadCollections = useCallback(async (): Promise<Collection[] | null> => {
@@ -213,6 +217,7 @@ export default function Dashboard() {
 
     function logout() {
         localStorage.removeItem("token");
+        clearGuestSession();
 
         navigate("/signin");
     }
@@ -772,6 +777,24 @@ export default function Dashboard() {
                 />
 
                 <main className="dashboard-main">
+                    {isGuest && (
+                        <div
+                            className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900"
+                            role="status"
+                        >
+                            <span>
+                                <strong>You're exploring a demo account.</strong>{" "}
+                                Add, edit or delete anything. It's all reset after 24 hours.
+                            </span>
+                            <Link
+                                to="/signup"
+                                className="font-semibold text-violet-700 underline-offset-4 hover:underline"
+                            >
+                                Create your own account →
+                            </Link>
+                        </div>
+                    )}
+
                     <div className="dashboard-mobile-toolbar">
                         <button
                             type="button"

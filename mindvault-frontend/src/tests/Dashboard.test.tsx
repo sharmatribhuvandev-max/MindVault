@@ -1,6 +1,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import axios from 'axios'
 import Dashboard from '../pages/dashboard'
@@ -270,6 +271,32 @@ describe('Dashboard component', () => {
 
         expect(localStorage.getItem('token')).toBeNull()
         expect(mockNavigate).toHaveBeenCalledWith('/signin')
+    })
+
+    it('shows no demo banner for a normal account', () => {
+        localStorage.removeItem('guestExpiresAt')
+        render(<Dashboard />)
+
+        expect(screen.queryByText(/exploring a demo account/)).not.toBeInTheDocument()
+    })
+
+    it('shows a demo banner for guests and clears guest mode on logout', async () => {
+        localStorage.setItem('guestExpiresAt', '2026-11-13T10:00:00.000Z')
+        const user = userEvent.setup()
+        render(
+            <MemoryRouter>
+                <Dashboard />
+            </MemoryRouter>,
+        )
+
+        expect(screen.getByText(/exploring a demo account/)).toBeInTheDocument()
+        expect(
+            screen.getByRole('link', { name: /Create your own account/ }),
+        ).toHaveAttribute('href', '/signup')
+
+        await user.click(screen.getByRole('button', { name: 'Logout' }))
+
+        expect(localStorage.getItem('guestExpiresAt')).toBeNull()
     })
 
     it('sends the favorite update with the authentication token', async () => {
