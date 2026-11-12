@@ -216,6 +216,27 @@ describe('Card component', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('collapses long notes behind "Show more"', async () => {
+    const user = userEvent.setup()
+    const longBody = Array.from({ length: 20 }, (_, i) => `Line ${i + 1}`).join('\n')
+
+    render(<Card {...defaultProps} type="note" link="" body={longBody} />)
+
+    const toggle = screen.getByRole('button', { name: 'Show more' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+
+    await user.click(toggle)
+
+    expect(screen.getByRole('button', { name: 'Show less' }))
+      .toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('does not offer "Show more" for short notes', () => {
+    render(<Card {...defaultProps} type="note" link="" body="Short note" />)
+
+    expect(screen.queryByRole('button', { name: 'Show more' })).not.toBeInTheDocument()
+  })
+
   it('shows a note body on public cards', () => {
     render(
       <Card {...defaultProps} type="note" link="" body="Shared idea" isPublic />,

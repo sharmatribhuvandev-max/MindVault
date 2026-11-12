@@ -275,7 +275,7 @@ describe('CreateContentModal component', () => {
 
     await user.click(twitterButton)
 
-    expect(twitterButton).toHaveClass('bg-[var(--purple-600)]')
+    expect(twitterButton).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('closes the dialog when Escape is pressed', async () => {
@@ -362,8 +362,6 @@ describe('CreateContentModal component', () => {
     return screen.getByRole('button', { name })
   }
 
-  const SELECTED = 'bg-[var(--purple-600)]'
-
   it.each([
     ['https://youtu.be/dQw4w9WgXcQ', 'YouTube'],
     ['https://x.com/someone/status/123', 'Twitter / X'],
@@ -375,7 +373,7 @@ describe('CreateContentModal component', () => {
       target: { value: url },
     })
 
-    expect(typeButton(label)).toHaveClass(SELECTED)
+    expect(typeButton(label)).toHaveAttribute('aria-pressed', 'true')
     expect(
       screen.getByText(`Detected ${label} from the link.`),
     ).toBeInTheDocument()
@@ -391,8 +389,8 @@ describe('CreateContentModal component', () => {
       target: { value: 'https://youtu.be/dQw4w9WgXcQ' },
     })
 
-    expect(typeButton('Article')).toHaveClass(SELECTED)
-    expect(typeButton('YouTube')).not.toHaveClass(SELECTED)
+    expect(typeButton('Article')).toHaveAttribute('aria-pressed', 'true')
+    expect(typeButton('YouTube')).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('does not change the type of an item being edited', () => {
@@ -416,7 +414,7 @@ describe('CreateContentModal component', () => {
       target: { value: 'https://youtu.be/dQw4w9WgXcQ' },
     })
 
-    expect(typeButton('Article')).toHaveClass(SELECTED)
+    expect(typeButton('Article')).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('creates a note without a link', async () => {

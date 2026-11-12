@@ -31,18 +31,18 @@ export function LinkCard({
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-w-0 items-start gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:p-4"
+            className="flex min-w-0 items-start gap-3 rounded-lg border border-line p-3 transition-colors hover:bg-surface-2"
         >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 text-slate-700 [&_svg]:h-5 [&_svg]:w-5" aria-hidden="true">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-2 text-ink-2 [&_svg]:h-[18px] [&_svg]:w-[18px]" aria-hidden="true">
                 {icon}
             </span>
 
             <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-slate-900">
+                <span className="block truncate text-[13.5px] font-medium text-ink">
                     {primary}
                 </span>
                 {children}
-                <span className="block text-sm text-indigo-700">
+                <span className="mt-0.5 block text-[13px] font-medium text-accent-text">
                     {secondary}
                 </span>
             </span>
@@ -56,7 +56,7 @@ function OpenOriginal({ href, site }: { href: string; site: string }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-block text-xs text-slate-500 underline-offset-2 hover:underline"
+            className="mt-2 inline-block text-xs text-muted underline-offset-2 hover:text-ink hover:underline"
         >
             Not loading? Open on {site}
         </a>
@@ -104,13 +104,13 @@ function GitHubRepoCard({
             secondary="View repository →"
         >
             {info?.description && (
-                <span className="mt-1 line-clamp-2 block text-sm text-slate-600">
+                <span className="mt-0.5 line-clamp-2 block text-[13px] text-muted">
                     {info.description}
                 </span>
             )}
 
             {info && (
-                <span className="my-1 flex flex-wrap gap-x-3 text-xs text-slate-500">
+                <span className="mt-1 flex flex-wrap gap-x-3 text-xs text-faint">
                     <span aria-label={`${info.stars} stars`}>
                         ★ {formatStars(info.stars)}
                     </span>
@@ -143,7 +143,7 @@ export function GitHubEmbed({ link }: { link: string }) {
                         src={`https://github.com/${encodeURIComponent(target.owner)}.png?size=80`}
                         alt=""
                         loading="lazy"
-                        className="h-10 w-10"
+                        className="h-9 w-9"
                     />
                 }
                 primary={target.owner}
@@ -185,7 +185,7 @@ export function InstagramEmbed({ link, title }: { link: string; title: string })
                 title={title}
                 loading="lazy"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                className="h-[560px] w-full rounded-lg border border-slate-200 bg-white"
+                className="h-[560px] w-full rounded-lg border border-line bg-white"
             />
             <OpenOriginal href={link} site="Instagram" />
         </div>
@@ -221,7 +221,7 @@ export function LinkedInEmbed({ link, title }: { link: string; title: string }) 
                 title={title}
                 loading="lazy"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                className="h-[520px] w-full rounded-lg border border-slate-200 bg-white"
+                className="h-[520px] w-full rounded-lg border border-line bg-white"
             />
             <OpenOriginal href={link} site="LinkedIn" />
         </div>

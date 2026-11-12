@@ -26,8 +26,8 @@ export function AuthCallback() {
     }, [navigate]);
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-[var(--mindvault-background)] px-4">
-            <p className="text-sm text-[var(--mindvault-muted)]" aria-live="polite">
+        <main className="flex min-h-screen items-center justify-center bg-canvas px-4">
+            <p className="text-sm text-muted" aria-live="polite">
                 Signing you in…
             </p>
         </main>

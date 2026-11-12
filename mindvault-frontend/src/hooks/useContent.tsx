@@ -12,6 +12,8 @@ import type { Content } from "../types";
 export function useContent() {
     const [contents, setContents] = useState<Content[]>([]);
     const [error, setError] = useState("");
+    // False until the first load attempt finishes (success or error).
+    const [loaded, setLoaded] = useState(false);
 
     const refresh = useCallback(async () => {
         try {
@@ -63,6 +65,8 @@ export function useContent() {
             } else {
                 setError("An unexpected error occurred while loading content.");
             }
+        } finally {
+            setLoaded(true);
         }
     }, []);
 
@@ -70,5 +74,6 @@ export function useContent() {
         contents,
         refresh,
         error,
+        loaded,
     };
 }

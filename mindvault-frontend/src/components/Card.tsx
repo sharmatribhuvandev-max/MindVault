@@ -1,14 +1,24 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
+import { ArrowUpRight, Lock, Pencil, Pin, Star, Trash2 } from "lucide-react";
 
-import { ShareIcon } from "../icons/ShareIcon";
 import { ArticleIcon } from "../icons/ArticleIcon";
-import { getDisplayDomain, type ContentType } from "../contentTypes";
+import {
+    CONTENT_TYPE_LABELS,
+    getDisplayDomain,
+    type ContentType,
+} from "../contentTypes";
+import { useTheme } from "../theme";
+import { ContentTypeIcon } from "./ContentTypeIcon";
 import {
     GitHubEmbed,
     InstagramEmbed,
     LinkCard,
     LinkedInEmbed,
 } from "./Embeds";
+
+// Notes longer than this are collapsed behind "Show more".
+const NOTE_PREVIEW_CHARS = 360;
+const NOTE_PREVIEW_LINES = 9;
 
 interface CardProps {
     id: string;
@@ -128,6 +138,9 @@ export function Card({
     onEdit,
     isPublic = false,
 }: CardProps) {
+    const [noteExpanded, setNoteExpanded] = useState(false);
+    const { resolved: resolvedTheme } = useTheme();
+
     const twitterContainerRef =
         useRef<HTMLDivElement | null>(
             null
@@ -164,6 +177,9 @@ export function Card({
 
         blockquote.className =
             "twitter-tweet";
+
+        // Match the X widget to the app theme.
+        blockquote.dataset.theme = resolvedTheme;
 
         const linkElement =
             document.createElement("a");
@@ -235,6 +251,7 @@ export function Card({
         link,
         type,
         twitterUrlType,
+        resolvedTheme,
     ]);
 
     const handleFavorite =
@@ -270,213 +287,164 @@ export function Card({
         );
     };
 
+    const domain = link ? getDisplayDomain(link) : null;
+    const actionsDisabled = isDeleting || isFavoriting || isPinning;
+    const noteIsLong =
+        body.length > NOTE_PREVIEW_CHARS ||
+        body.split("\n").length > NOTE_PREVIEW_LINES;
+
     return (
-        <div className="min-w-0 h-full">
-            <article className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
-                <div className="flex flex-col gap-3">
-                    <div className="flex min-w-0 items-start gap-2 text-base font-semibold text-slate-900">
-                        <span className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true">
-                            <ShareIcon />
+        <div className="min-w-0">
+            <article className="content-card flex min-w-0 flex-col rounded-xl border border-line bg-surface shadow-soft transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-raised">
+                {/* Meta row: type + source, with actions on the right */}
+                <div className="flex min-h-11 items-center gap-2 py-1.5 pl-4 pr-1.5">
+                    <span className="flex min-w-0 flex-1 items-center gap-1.5 text-xs text-muted [&_svg]:h-3.5 [&_svg]:w-3.5">
+                        <span className="shrink-0" aria-hidden="true">
+                            <ContentTypeIcon type={type} />
                         </span>
-
-                        <h2 className="min-w-0 break-words leading-snug">{title}</h2>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-                        {link && (
-                            <div className="text-slate-500">
-                                <a
-                                    href={link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label={`Open ${title} in a new tab`}
-                                    title="Open original link"
-                                    className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                >
-                                    <ShareIcon />
-                                </a>
-                            </div>
+                        <span className="shrink-0 font-medium text-ink-2">
+                            {CONTENT_TYPE_LABELS[type]}
+                        </span>
+                        {domain && type !== "article" && (
+                            <span className="truncate">· {domain}</span>
                         )}
+                    </span>
 
+                    <div className="flex shrink-0 items-center">
                         {!isPublic && (
                             <>
-                                {/* Favorite */}
-                                <button
-                                    type="button"
-                                    onClick={
-                                        handleFavorite
-                                    }
-                                    disabled={
-                                        isFavoriting ||
-                                        isPinning ||
-                                        isDeleting
-                                    }
-                                    aria-label={
-                                        isFavorite ===
-                                            true
-                                            ? "Remove from favorites"
-                                            : "Add to favorites"
-                                    }
-                                    title={
-                                        isFavorite ===
-                                            true
-                                            ? "Remove from favorites"
-                                            : "Add to favorites"
-                                    }
-                                    aria-pressed={isFavorite}
-                                    className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md text-xl text-amber-600 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                >
-                                    {isFavoriting
-                                        ? "..."
-                                        : isFavorite ===
-                                            true
-                                            ? "★"
-                                            : "☆"}
-                                </button>
+                                <span className="card-hover-actions flex items-center">
+                                    <IconButton
+                                        label="Edit"
+                                        onClick={() => onEdit(id)}
+                                        disabled={actionsDisabled}
+                                    >
+                                        <Pencil />
+                                    </IconButton>
 
-                                {/* Pin */}
-                                <button
-                                    type="button"
-                                    onClick={
-                                        handlePin
-                                    }
-                                    disabled={
-                                        isFavoriting ||
-                                        isPinning ||
-                                        isDeleting
-                                    }
-                                    aria-label={
-                                        isPinned ===
-                                            true
-                                            ? "Unpin content"
-                                            : "Pin content"
-                                    }
-                                    title={
-                                        isPinned ===
-                                            true
-                                            ? "Unpin content"
-                                            : "Pin content"
-                                    }
-                                    aria-pressed={isPinned}
-                                    className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md text-xl text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                >
-                                    {isPinning
-                                        ? "..."
-                                        : isPinned ===
-                                            true
-                                            ? "📌"
-                                            : "📍"}
-                                </button>
+                                    <IconButton
+                                        label={isDeleting ? "Deleting..." : "Delete"}
+                                        title="Delete"
+                                        onClick={() => onDelete(id)}
+                                        disabled={actionsDisabled}
+                                        tone="danger"
+                                    >
+                                        <Trash2 />
+                                    </IconButton>
+                                </span>
 
-                                {/* Edit */}
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        onEdit(
-                                            id
-                                        )
-                                    }
-                                    disabled={
-                                        isDeleting ||
-                                        isFavoriting ||
-                                        isPinning
-                                    }
-                                    className="inline-flex min-h-9 items-center rounded-md px-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                >
-                                    Edit
-                                </button>
+                                <span className={isPinned ? "flex" : "card-hover-actions flex"}>
+                                    <IconButton
+                                        label={isPinned ? "Unpin content" : "Pin content"}
+                                        onClick={handlePin}
+                                        disabled={actionsDisabled}
+                                        pressed={isPinned}
+                                        busy={isPinning}
+                                    >
+                                        <Pin className={isPinned ? "fill-current text-accent-text" : ""} />
+                                    </IconButton>
+                                </span>
 
-                                {/* Delete */}
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        onDelete(
-                                            id
-                                        )
-                                    }
-                                    disabled={
-                                        isDeleting ||
-                                        isFavoriting ||
-                                        isPinning
-                                    }
-                                    className="inline-flex min-h-9 items-center rounded-md px-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                >
-                                    {isDeleting
-                                        ? "Deleting..."
-                                        : "Delete"}
-                                </button>
+                                <span className={isFavorite ? "flex" : "card-hover-actions flex"}>
+                                    <IconButton
+                                        label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                                        onClick={handleFavorite}
+                                        disabled={actionsDisabled}
+                                        pressed={isFavorite}
+                                        busy={isFavoriting}
+                                    >
+                                        <Star className={isFavorite ? "fill-current text-star" : ""} />
+                                    </IconButton>
+                                </span>
                             </>
+                        )}
+
+                        {link && (
+                            <a
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`Open ${title} in a new tab`}
+                                title="Open original link"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-faint transition-colors hover:bg-surface-2 hover:text-ink"
+                            >
+                                <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                            </a>
                         )}
                     </div>
                 </div>
 
-                <div className="pt-4">
-                    {type === "youtube" &&
-                        youtubeEmbedUrl && (
-                            <iframe
-                                key={
-                                    youtubeEmbedUrl
-                                }
-                                className="aspect-video w-full rounded-lg border-0 bg-slate-100"
-                                loading="lazy"
-                                src={
-                                    youtubeEmbedUrl
-                                }
-                                title={title}
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerPolicy="strict-origin-when-cross-origin"
-                                allowFullScreen
-                            ></iframe>
-                        )}
+                <div className="flex min-w-0 flex-1 flex-col px-4 pb-4">
+                    <h2 className="mb-3 break-words text-[15px] font-semibold leading-snug tracking-[-0.01em] text-ink">
+                        {title}
+                    </h2>
 
-                    {type === "youtube" &&
-                        !youtubeEmbedUrl && (
-                            <p className="text-red-500 text-sm">
-                                Invalid YouTube link.
-                            </p>
-                        )}
+                    {type === "youtube" && youtubeEmbedUrl && (
+                        <iframe
+                            key={youtubeEmbedUrl}
+                            className="aspect-video w-full rounded-lg border-0 bg-surface-2"
+                            loading="lazy"
+                            src={youtubeEmbedUrl}
+                            title={title}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            allowFullScreen
+                        ></iframe>
+                    )}
 
-                    {type === "twitter" &&
-                        twitterUrlType ===
-                        "post" && (
+                    {type === "youtube" && !youtubeEmbedUrl && (
+                        <p className="text-sm text-danger">
+                            Invalid YouTube link.
+                        </p>
+                    )}
+
+                    {type === "twitter" && twitterUrlType === "post" && (
+                        <div>
                             <div
-                                ref={
-                                    twitterContainerRef
-                                }
-                                className="min-h-20 min-w-0 max-w-full overflow-hidden [&_iframe]:max-w-full"
+                                ref={twitterContainerRef}
+                                className="min-w-0 max-w-full overflow-hidden [&_blockquote]:m-0 [&_blockquote]:rounded-lg [&_blockquote]:border [&_blockquote]:border-line [&_blockquote]:p-3 [&_blockquote]:text-sm [&_blockquote_a]:font-medium [&_blockquote_a]:text-accent-text [&_iframe]:max-w-full"
                             ></div>
-                        )}
+                            {/* The X widget is often blocked (privacy settings,
+                                content blockers), so always offer the link. */}
+                            <a
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-2 inline-block text-xs text-muted underline-offset-2 hover:text-ink hover:underline"
+                            >
+                                Not loading? Open on X
+                            </a>
+                        </div>
+                    )}
 
-                    {type === "twitter" &&
-                        twitterUrlType ===
-                        "profile" && (
-                            <div className="min-w-0 rounded-lg border border-slate-200 p-3 sm:p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white font-bold">
-                                        X
-                                    </div>
-
-                                    <div className="min-w-0">
-                                        <p className="font-semibold">
-                                            X Profile
-                                        </p>
-
-                                        <p className="text-sm text-gray-500 break-all">
-                                            {link}
-                                        </p>
-                                    </div>
+                    {type === "twitter" && twitterUrlType === "profile" && (
+                        <div className="min-w-0 rounded-lg border border-line p-3">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-bold text-canvas">
+                                    X
                                 </div>
 
-                                <a
-                                    href={link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="mt-3 inline-block rounded text-indigo-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                >
-                                    Open Profile
-                                </a>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium text-ink">
+                                        X Profile
+                                    </p>
+
+                                    <p className="truncate text-xs text-muted">
+                                        {link}
+                                    </p>
+                                </div>
                             </div>
-                        )}
+
+                            <a
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-2 inline-block text-sm font-medium text-accent-text underline-offset-2 hover:underline"
+                            >
+                                Open Profile
+                            </a>
+                        </div>
+                    )}
 
                     {type === "article" && (
                         <LinkCard
@@ -498,33 +466,94 @@ export function Card({
                     )}
 
                     {type === "note" && (
-                        <p className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-amber-50 p-3 text-sm leading-relaxed text-slate-800 sm:p-4">
-                            {body}
+                        <div className="rounded-lg border border-note-line bg-note">
+                            <p
+                                id={`note-body-${id}`}
+                                className={`whitespace-pre-wrap break-words px-3.5 pt-3 text-[13.5px] leading-relaxed text-ink-2 ${
+                                    noteIsLong && !noteExpanded
+                                        ? "max-h-48 overflow-hidden [mask-image:linear-gradient(to_bottom,black_65%,transparent)]"
+                                        : "pb-3"
+                                }`}
+                            >
+                                {body}
+                            </p>
+                            {noteIsLong && (
+                                <button
+                                    type="button"
+                                    onClick={() => setNoteExpanded((current) => !current)}
+                                    aria-expanded={noteExpanded}
+                                    aria-controls={`note-body-${id}`}
+                                    className="mx-2 mb-1.5 rounded px-1.5 py-1 text-xs font-medium text-accent-text hover:underline"
+                                >
+                                    {noteExpanded ? "Show less" : "Show more"}
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {type === "twitter" && twitterUrlType === "invalid" && (
+                        <p className="text-sm text-danger">
+                            Invalid X/Twitter link.
                         </p>
                     )}
 
-                    {type === "twitter" &&
-                        twitterUrlType ===
-                        "invalid" && (
-                            <p className="text-red-500 text-sm">
-                                Invalid X/Twitter link.
-                            </p>
-                        )}
+                    {/* Notes: visible only on private dashboard cards */}
+                    {!isPublic && notes.trim() !== "" && (
+                        <div className="mt-auto pt-3">
+                            <div className="border-t border-line pt-3">
+                                <h3 className="mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider text-faint">
+                                    <Lock className="h-3 w-3" aria-hidden="true" />
+                                    Notes
+                                </h3>
+
+                                <p className="max-h-32 overflow-auto whitespace-pre-wrap break-words text-[13px] leading-relaxed text-muted" title="Scroll to read longer notes">
+                                    {notes}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
-
-                {/* Notes: visible only on private dashboard cards */}
-                {!isPublic && notes.trim() !== "" && (
-                    <div className="mt-4 border-t border-gray-200 pt-3">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-1">
-                            Notes
-                        </h3>
-
-                        <p className="max-h-32 overflow-auto whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-600" title="Scroll to read longer notes">
-                            {notes}
-                        </p>
-                    </div>
-                )}
             </article>
         </div>
+    );
+}
+
+// Compact icon-only action button used in the card's header.
+function IconButton({
+    label,
+    title,
+    onClick,
+    disabled,
+    pressed,
+    busy = false,
+    tone = "default",
+    children,
+}: {
+    label: string;
+    title?: string;
+    onClick: () => void;
+    disabled?: boolean;
+    pressed?: boolean;
+    busy?: boolean;
+    tone?: "default" | "danger";
+    children: ReactElement;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+            aria-pressed={pressed}
+            aria-busy={busy || undefined}
+            title={title ?? label}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-faint transition-colors disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4 ${
+                tone === "danger"
+                    ? "hover:bg-danger-soft hover:text-danger"
+                    : "hover:bg-surface-2 hover:text-ink"
+            } ${busy ? "animate-pulse" : ""}`}
+        >
+            {children}
+        </button>
     );
 }

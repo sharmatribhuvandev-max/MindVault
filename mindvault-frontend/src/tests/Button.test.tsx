@@ -37,28 +37,28 @@ describe('Button component', () => {
     render(<Button variant="primary" text="Primary" />)
 
     expect(screen.getByRole('button', { name: 'Primary' }))
-      .toHaveClass('bg-[var(--purple-600)]', 'text-white')
+      .toHaveClass('bg-accent', 'text-accent-ink')
   })
 
   it('applies the secondary variant styles', () => {
     render(<Button variant="secondary" text="Secondary" />)
 
     expect(screen.getByRole('button', { name: 'Secondary' }))
-      .toHaveClass('bg-[var(--purple-200)]')
+      .toHaveClass('bg-surface', 'border-line-strong')
   })
 
   it('uses medium size by default', () => {
     render(<Button variant="primary" text="Default Size" />)
 
     expect(screen.getByRole('button', { name: 'Default Size' }))
-      .toHaveClass('px-4', 'py-2')
+      .toHaveClass('h-9', 'px-3.5')
   })
 
   it('applies large size styles', () => {
     render(<Button variant="primary" size="lg" text="Large" />)
 
     expect(screen.getByRole('button', { name: 'Large' }))
-      .toHaveClass('px-6', 'py-4')
+      .toHaveClass('h-11', 'px-5')
   })
 
   it('uses full width when fullWidth is true', () => {
@@ -78,7 +78,7 @@ describe('Button component', () => {
     const button = screen.getByRole('button', { name: 'Loading' })
 
     expect(button).toBeDisabled()
-    expect(button).toHaveClass('opacity-45')
+    expect(button).toHaveAttribute('aria-busy', 'true')
   })
 
   it('does not call onClick while loading', async () => {

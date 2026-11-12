@@ -1,14 +1,15 @@
 import { useEffect } from "react";
+import { Folder, LayoutGrid, LogOut, Pin, Star, X } from "lucide-react";
 
-import { BrainIcon } from "../icons/BrainIcon";
-import { LogoutIcon } from "../icons/LogoutIcon";
 import {
     CONTENT_TYPES,
     CONTENT_TYPE_LABELS,
     type ContentType,
 } from "../contentTypes";
 import { ContentTypeIcon } from "./ContentTypeIcon";
+import { Logo } from "./Logo";
 import { SidebarItem } from "./SidebarItem";
+import { ThemeToggle } from "./ThemeToggle";
 
 type ContentFilter =
     | "all"
@@ -34,6 +35,17 @@ interface SidebarProps {
     onLogout?: () => void;
     loggingOut?: boolean;
     username?: string | null;
+}
+
+function SectionTitle({ id, children }: { id: string; children: string }) {
+    return (
+        <h2
+            id={id}
+            className="mb-1 px-2.5 text-[11px] font-medium uppercase tracking-wider text-faint"
+        >
+            {children}
+        </h2>
+    );
 }
 
 export function Sidebar({
@@ -76,6 +88,9 @@ export function Sidebar({
         onClose?.();
     }
 
+    const isActive = (type: ContentFilter) =>
+        selectedType === type && selectedCollectionId === null;
+
     return (
         <>
             {isOpen && (
@@ -92,48 +107,60 @@ export function Sidebar({
                 aria-label="Main navigation"
                 className={`mindvault-sidebar ${isOpen ? "is-open" : ""}`}
             >
-                <div className="sidebar-brand">
-                    <span className="sidebar-brand-icon" aria-hidden="true">
-                        <BrainIcon />
-                    </span>
-                    <span>Mind Vault</span>
+                <div className="px-2.5 pb-5 pt-1">
+                    <Logo />
                 </div>
 
                 <nav className="sidebar-navigation" aria-label="Content navigation">
-                    <SidebarItem
-                        text="All content"
-                        icon={<BrainIcon />}
-                        active={selectedType === "all" && selectedCollectionId === null}
-                        onClick={() => selectType("all")}
-                    />
-
-                    {CONTENT_TYPES.map((type) => (
+                    <div className="space-y-px">
                         <SidebarItem
-                            key={type}
-                            text={CONTENT_TYPE_LABELS[type]}
-                            icon={<ContentTypeIcon type={type} />}
-                            active={selectedType === type && selectedCollectionId === null}
-                            onClick={() => selectType(type)}
+                            text="All content"
+                            icon={<LayoutGrid />}
+                            active={isActive("all")}
+                            onClick={() => selectType("all")}
                         />
-                    ))}
+                        <SidebarItem
+                            text="Favorites"
+                            icon={<Star />}
+                            active={isActive("favorites")}
+                            onClick={() => selectType("favorites")}
+                        />
+                        <SidebarItem
+                            text="Pinned"
+                            icon={<Pin />}
+                            active={isActive("pinned")}
+                            onClick={() => selectType("pinned")}
+                        />
+                    </div>
+
+                    <section className="mt-6" aria-labelledby="sidebar-types-heading">
+                        <SectionTitle id="sidebar-types-heading">Types</SectionTitle>
+                        <div className="space-y-px">
+                            {CONTENT_TYPES.map((type) => (
+                                <SidebarItem
+                                    key={type}
+                                    text={CONTENT_TYPE_LABELS[type]}
+                                    icon={<ContentTypeIcon type={type} />}
+                                    active={isActive(type)}
+                                    onClick={() => selectType(type)}
+                                />
+                            ))}
+                        </div>
+                    </section>
 
                     {collections.length > 0 && (
-                        <section className="sidebar-collections" aria-labelledby="sidebar-collections-heading">
-                            <h2 id="sidebar-collections-heading" className="sidebar-section-title">
-                                Collections
-                            </h2>
+                        <section className="mt-6" aria-labelledby="sidebar-collections-heading">
+                            <SectionTitle id="sidebar-collections-heading">Collections</SectionTitle>
 
-                            <ul className="sidebar-collection-list">
+                            <ul className="m-0 list-none space-y-px p-0">
                                 {collections.map((collection) => (
-                                    <li key={collection._id} className="sidebar-collection-row">
-                                        <div className="sidebar-collection-select">
-                                            <SidebarItem
-                                                text={collection.name}
-                                                icon={<BrainIcon />}
-                                                active={selectedCollectionId === collection._id}
-                                                onClick={() => selectCollection(collection._id)}
-                                            />
-                                        </div>
+                                    <li key={collection._id} className="sidebar-collection-row relative [&_.sidebar-item]:pr-8">
+                                        <SidebarItem
+                                            text={collection.name}
+                                            icon={<Folder />}
+                                            active={selectedCollectionId === collection._id}
+                                            onClick={() => selectCollection(collection._id)}
+                                        />
 
                                         <button
                                             type="button"
@@ -141,9 +168,11 @@ export function Sidebar({
                                             disabled={deletingCollectionId === collection._id}
                                             aria-label={`Delete collection ${collection.name}`}
                                             title={`Delete ${collection.name}`}
-                                            className="sidebar-delete-collection"
+                                            className="sidebar-delete-collection absolute right-1 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-faint transition hover:bg-danger-soft hover:text-danger disabled:cursor-wait"
                                         >
-                                            {deletingCollectionId === collection._id ? "…" : "×"}
+                                            {deletingCollectionId === collection._id
+                                                ? "…"
+                                                : <X className="h-3.5 w-3.5" aria-hidden="true" />}
                                         </button>
                                     </li>
                                 ))}
@@ -152,36 +181,45 @@ export function Sidebar({
                     )}
                 </nav>
 
-                {(username || onLogout) && (
-                    <div className="sidebar-footer">
-                        {username && (
-                            <div className="sidebar-user" title={`Signed in as ${username}`}>
-                                <span className="sidebar-user-avatar" aria-hidden="true">
-                                    {username.charAt(0).toUpperCase()}
-                                </span>
-                                <span className="sidebar-user-text">
-                                    <span className="sidebar-user-label">Signed in as</span>
-                                    <span className="sidebar-user-name">{username}</span>
-                                </span>
-                            </div>
-                        )}
+                <div className="mt-auto space-y-3 border-t border-line pt-3">
+                    <ThemeToggle variant="segmented" />
 
-                        {onLogout && (
-                            <button
-                                type="button"
-                                onClick={onLogout}
-                                disabled={loggingOut}
-                                title="Signs you out on all your devices"
-                                className="sidebar-item sidebar-logout flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-                            >
-                                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center" aria-hidden="true">
-                                    <LogoutIcon />
-                                </span>
-                                <span>{loggingOut ? "Logging out…" : "Logout"}</span>
-                            </button>
-                        )}
-                    </div>
-                )}
+                    {(username || onLogout) && (
+                        <div className="flex min-w-0 items-center gap-2.5 px-1">
+                            {username && (
+                                <>
+                                    <span
+                                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent-text"
+                                        aria-hidden="true"
+                                    >
+                                        {username.charAt(0).toUpperCase()}
+                                    </span>
+                                    <span
+                                        className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink"
+                                        title={`Signed in as ${username}`}
+                                    >
+                                        <span className="sr-only">Signed in as </span>
+                                        {username}
+                                    </span>
+                                </>
+                            )}
+
+                            {onLogout && (
+                                <button
+                                    type="button"
+                                    onClick={onLogout}
+                                    disabled={loggingOut}
+                                    aria-label={loggingOut ? "Logging out…" : "Logout"}
+                                    title="Log out on all your devices"
+                                    className="ml-auto inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2 text-[13px] text-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:cursor-wait disabled:opacity-60"
+                                >
+                                    <LogOut className="h-4 w-4" aria-hidden="true" />
+                                    {!username && <span>{loggingOut ? "Logging out…" : "Logout"}</span>}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
             </aside>
         </>
     );

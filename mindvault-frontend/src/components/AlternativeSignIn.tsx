@@ -8,9 +8,9 @@ import {
     type EnabledProviders,
 } from "../oauth";
 import { GuestButton } from "./GuestButton";
+import { authSecondaryButton } from "../authStyles";
 
-const providerButtonClass =
-    "flex min-h-11 w-full items-center justify-center gap-3 rounded-lg border border-[var(--mindvault-border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--mindvault-ink)] transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--mindvault-focus)]";
+const providerButtonClass = authSecondaryButton;
 
 // Everything below the username/password form: social sign-in (when
 // configured) and the guest demo.
@@ -33,13 +33,13 @@ export function AlternativeSignIn() {
 
     return (
         <div className="mt-5">
-            <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-[var(--mindvault-muted)]">
-                <span className="h-px flex-1 bg-[var(--mindvault-border)]" />
+            <div className="flex items-center gap-3 text-xs text-faint">
+                <span className="h-px flex-1 bg-line" />
                 or
-                <span className="h-px flex-1 bg-[var(--mindvault-border)]" />
+                <span className="h-px flex-1 bg-line" />
             </div>
 
-            <div className="mt-5 space-y-3">
+            <div className="mt-5 space-y-2.5">
                 {providers?.google && (
                     <a href={oauthStartUrl("google")} className={providerButtonClass}>
                         <GoogleIcon />
@@ -48,7 +48,7 @@ export function AlternativeSignIn() {
                 )}
 
                 {providers?.github && (
-                    <a href={oauthStartUrl("github")} className={`${providerButtonClass} [&_svg]:h-5 [&_svg]:w-5`}>
+                    <a href={oauthStartUrl("github")} className={`${providerButtonClass} [&_svg]:h-[18px] [&_svg]:w-[18px]`}>
                         <GitHubIcon />
                         Continue with GitHub
                     </a>
