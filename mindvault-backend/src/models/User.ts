@@ -16,6 +16,13 @@ const UserSchema = new Schema(
             type: String,
             required: true,
         },
+
+        // Incremented on logout. Tokens carry the version they were issued
+        // with, so bumping it invalidates every outstanding token at once.
+        tokenVersion: {
+            type: Number,
+            default: 0,
+        },
     },
     {
         timestamps: true,

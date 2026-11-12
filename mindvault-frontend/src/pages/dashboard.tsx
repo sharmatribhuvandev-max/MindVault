@@ -123,6 +123,46 @@ export default function Dashboard() {
         }
     }, [navigate]);
 
+    const [username, setUsername] =
+        useState<string | null>(null);
+
+    // Load the signed-in user's name once, for the sidebar.
+    useEffect(() => {
+        let ignore = false;
+        const token =
+            localStorage.getItem("token");
+
+        if (!token) {
+            return;
+        }
+
+        axios
+            .get(`${BACKEND_URL}/api/v1/me`, {
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`,
+                },
+            })
+            .then((response) => {
+                const name = response.data?.username;
+
+                if (!ignore && typeof name === "string") {
+                    setUsername(name);
+                }
+            })
+            .catch((error) => {
+                // Not critical: the sidebar just shows no name.
+                console.error(
+                    "Failed to fetch current user:",
+                    error
+                );
+            });
+
+        return () => {
+            ignore = true;
+        };
+    }, []);
+
     async function fetchCollections() {
         const loaded = await loadCollections();
 
@@ -211,10 +251,42 @@ export default function Dashboard() {
         selectedCollectionId,
     ]);
 
-    function logout() {
+    const [loggingOut, setLoggingOut] =
+        useState(false);
+
+    async function logout() {
+        if (loggingOut) {
+            return;
+        }
+
+        setLoggingOut(true);
+
+        const token =
+            localStorage.getItem("token");
+
+        // Revoke the token on the server so a copied token stops working.
+        // Even if this fails (offline, server down), still sign out locally.
+        if (token) {
+            try {
+                await axios.post(
+                    `${BACKEND_URL}/api/v1/logout`,
+                    {},
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`,
+                        },
+                        timeout: 5000,
+                    }
+                );
+            } catch (error) {
+                console.error("Server logout failed:", error);
+            }
+        }
+
         localStorage.removeItem("token");
 
-        navigate("/signin");
+        navigate("/signin", { replace: true });
     }
 
     async function createShareLink() {
@@ -769,6 +841,9 @@ export default function Dashboard() {
                     }
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
+                    username={username}
+                    onLogout={logout}
+                    loggingOut={loggingOut}
                 />
 
                 <main className="dashboard-main">
@@ -871,12 +946,6 @@ export default function Dashboard() {
                                     }
                                 />
                             )}
-
-                            <Button
-                                onClick={logout}
-                                variant="secondary"
-                                text="Logout"
-                            />
                         </div>
                     </header>
 
