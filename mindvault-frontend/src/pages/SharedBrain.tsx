@@ -114,6 +114,20 @@ export function SharedBrain() {
         fetchSharedBrain();
     }, [hash]);
 
+    // Show whose Brain this is in the browser tab.
+    useEffect(() => {
+        if (!brain) {
+            return;
+        }
+
+        const previousTitle = document.title;
+        document.title = `${brain.username}'s Brain · Mind Vault`;
+
+        return () => {
+            document.title = previousTitle;
+        };
+    }, [brain]);
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -151,15 +165,30 @@ export function SharedBrain() {
     return (
         <div className="min-h-screen bg-gray-50 px-6 py-10">
             <div className="mx-auto max-w-5xl">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800">
-                        Shared Brain
-                    </h1>
+                <header className="mb-8 flex items-center gap-4">
+                    <span
+                        className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 text-2xl font-bold text-violet-800"
+                        aria-hidden="true"
+                    >
+                        {brain.username.charAt(0).toUpperCase()}
+                    </span>
 
-                    <p className="mt-2 text-gray-600">
-                        {brain.username}'s Brain
-                    </p>
-                </div>
+                    <div className="min-w-0">
+                        <h1 className="break-words text-3xl font-bold text-gray-800">
+                            {brain.username}'s Brain
+                        </h1>
+
+                        <p className="mt-1 text-gray-600">
+                            Shared by{" "}
+                            <span className="font-semibold text-gray-800">
+                                {brain.username}
+                            </span>
+                            {" · "}
+                            {brain.content.length}{" "}
+                            {brain.content.length === 1 ? "item" : "items"}
+                        </p>
+                    </div>
+                </header>
 
                 {brain.content.length === 0 ? (
                     <div className="rounded-md border border-gray-200 bg-white p-6 text-center">
