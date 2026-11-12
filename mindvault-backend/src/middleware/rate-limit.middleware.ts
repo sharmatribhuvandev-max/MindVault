@@ -20,6 +20,19 @@ export const signinLimiter = rateLimit({
 });
 
 /**
+ * Limits OAuth sign-in redirects and callbacks per IP.
+ */
+export const oauthLimiter = rateLimit({
+    windowMs: FIFTEEN_MINUTES,
+    limit: 30,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message: "Too many sign-in attempts. Please try again in 15 minutes.",
+    },
+});
+
+/**
  * Limits guest (demo) account creation per IP. Each guest account is
  * seeded with sample content, so this also caps database writes.
  */

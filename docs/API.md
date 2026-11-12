@@ -19,6 +19,9 @@ The JWT is issued by sign-in and currently expires after one hour. All user-owne
 | `POST` | `/guest` | Public | Create a temporary demo account and receive a JWT |
 | `POST` | `/logout` | Required | Revoke the user's tokens |
 | `GET` | `/me` | Required | Get the signed-in user's username |
+| `GET` | `/auth/providers` | Public | Which social sign-in providers are enabled: `{ "google": bool, "github": bool }` |
+| `GET` | `/auth/:provider/start` | Public | Browser redirect to Google or GitHub to sign in (`provider` is `google` or `github`) |
+| `GET` | `/auth/:provider/callback` | Public | Provider redirects here; on success redirects to `<FRONTEND_URL>/auth/callback#token=<JWT>`, otherwise to `<FRONTEND_URL>/signin?error=oauth_failed` or `oauth_cancelled` |
 
 Signup/signin request body:
 

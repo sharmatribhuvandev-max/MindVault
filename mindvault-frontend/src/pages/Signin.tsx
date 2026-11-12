@@ -1,11 +1,12 @@
 
 import axios from "axios";
 import { useRef, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-import { GuestButton } from "../components/GuestButton";
+import { AlternativeSignIn } from "../components/AlternativeSignIn";
 import { Input } from "../components/Input";
 import { clearGuestSession } from "../guestSession";
+import { oauthErrorMessage } from "../oauth";
 import { BACKEND_URL } from "../config";
 
 export function Signin() {
@@ -14,7 +15,12 @@ export function Signin() {
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [searchParams] = useSearchParams();
+
+    // Shown when Google/GitHub sign-in redirects back with ?error=...
+    const [error, setError] = useState(() =>
+        oauthErrorMessage(searchParams.get("error"))
+    );
 
     async function signin(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -136,7 +142,7 @@ export function Signin() {
                     </button>
                 </form>
 
-                <GuestButton />
+                <AlternativeSignIn />
 
                 <p className="mt-6 text-center text-sm text-[var(--mindvault-muted)]">
                     Don&apos;t have an account?{" "}

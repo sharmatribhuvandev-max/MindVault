@@ -115,6 +115,13 @@ export async function signin(
             });
         }
 
+        // Accounts created with Google/GitHub have no password.
+        if (!existingUser.password) {
+            return res.status(401).json({
+                message: "Incorrect credentials",
+            });
+        }
+
         const passwordMatches = await bcrypt.compare(
             password,
             existingUser.password

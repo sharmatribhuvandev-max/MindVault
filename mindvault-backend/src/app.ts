@@ -6,6 +6,7 @@ import type { ErrorRequestHandler } from "express";
 import { FRONTEND_URL, TRUST_PROXY } from "./config.js";
 
 import authRoutes from "./routes/auth.routes.js";
+import oauthRoutes from "./routes/oauth.routes.js";
 import tagRoutes from "./routes/tag.routes.js";
 import contentRoutes from "./routes/content.routes.js";
 import collectionRoutes from "./routes/collection.routes.js";
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use(cors({ origin: FRONTEND_URL }));
 
 // API routes
+app.use("/api/v1/auth", oauthRoutes);
 app.use("/api/v1", authRoutes);
 app.use("/api/v1/tags", tagRoutes);
 app.use("/api/v1/content", contentRoutes);

@@ -12,9 +12,24 @@ const UserSchema = new Schema(
             maxlength: 30,
         },
 
+        // Empty for accounts that only sign in with Google or GitHub.
         password: {
             type: String,
-            required: true,
+            default: "",
+        },
+
+        // Provider account IDs for "Continue with Google/GitHub". Left
+        // unset (not null) when unused so the sparse unique index skips them.
+        googleId: {
+            type: String,
+            unique: true,
+            sparse: true,
+        },
+
+        githubId: {
+            type: String,
+            unique: true,
+            sparse: true,
         },
 
         // Incremented on logout. Tokens carry the version they were issued

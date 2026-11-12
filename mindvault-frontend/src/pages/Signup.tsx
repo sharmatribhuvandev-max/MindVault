@@ -2,7 +2,7 @@ import axios from "axios";
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { GuestButton } from "../components/GuestButton";
+import { AlternativeSignIn } from "../components/AlternativeSignIn";
 import { Input } from "../components/Input";
 import { BACKEND_URL } from "../config";
 
@@ -164,7 +164,7 @@ export function Signup() {
                     </button>
                 </form>
 
-                <GuestButton />
+                <AlternativeSignIn />
 
                 <p className="mt-6 text-center text-sm text-[var(--mindvault-muted)]">
                     Already have an account?{" "}
