@@ -48,3 +48,40 @@ export const TRUST_PROXY =
 if (!Number.isInteger(TRUST_PROXY) || TRUST_PROXY < 0) {
     throw new Error("TRUST_PROXY must be a non-negative integer");
 }
+
+// Public base URL of this API (no trailing slash). OAuth providers
+// redirect back to <API_PUBLIC_URL>/api/v1/auth/<provider>/callback, so
+// it must match the callback URL registered with Google and GitHub.
+export const API_PUBLIC_URL = (
+    process.env.API_PUBLIC_URL ?? `http://localhost:${PORT}`
+).replace(/\/+$/, "");
+
+export interface OAuthCredentials {
+    clientId: string;
+    clientSecret: string;
+}
+
+function readOAuthCredentials(prefix: string): OAuthCredentials | null {
+    const clientId = process.env[`${prefix}_CLIENT_ID`]?.trim();
+    const clientSecret = process.env[`${prefix}_CLIENT_SECRET`]?.trim();
+
+    return clientId && clientSecret ? { clientId, clientSecret } : null;
+}
+
+// A provider is enabled only when both its client ID and secret are set.
+export const OAUTH_CREDENTIALS = {
+    google: readOAuthCredentials("GOOGLE"),
+    github: readOAuthCredentials("GITHUB"),
+};
+
+if (
+    isProduction &&
+    (OAUTH_CREDENTIALS.google || OAUTH_CREDENTIALS.github) &&
+    !process.env.API_PUBLIC_URL
+) {
+    throw new Error(
+        "API_PUBLIC_URL must be defined in production when OAuth is enabled"
+    );
+}
+
+export const IS_PRODUCTION = isProduction;

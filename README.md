@@ -21,7 +21,7 @@ Live frontend: <https://mindvault-ruddy.vercel.app>
 
 ## Features
 
-- Sign up and sign in using a username and password, or continue as a guest with a temporary demo account.
+- Sign up and sign in with a username and password, with Google or GitHub, or continue as a guest with a temporary demo account.
 - Save YouTube videos, Twitter/X posts, GitHub repos and profiles, Instagram and LinkedIn posts, articles from any site, and plain-text notes. The type is detected automatically from the pasted link.
 - Edit saved items and organize them with tags and collections.
 - Add private notes to saved items.

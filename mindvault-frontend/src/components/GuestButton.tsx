@@ -27,18 +27,12 @@ export function GuestButton() {
     }
 
     return (
-        <div className="mt-5">
-            <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-[var(--mindvault-muted)]">
-                <span className="h-px flex-1 bg-[var(--mindvault-border)]" />
-                or
-                <span className="h-px flex-1 bg-[var(--mindvault-border)]" />
-            </div>
-
+        <div>
             <button
                 type="button"
                 onClick={() => void continueAsGuest()}
                 disabled={loading}
-                className="mt-5 flex min-h-11 w-full items-center justify-center rounded-lg border border-[var(--purple-600)] bg-white px-4 py-3 text-sm font-semibold text-[var(--purple-600)] transition hover:bg-violet-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--mindvault-focus)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex min-h-11 w-full items-center justify-center rounded-lg border border-[var(--purple-600)] bg-white px-4 py-3 text-sm font-semibold text-[var(--purple-600)] transition hover:bg-violet-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--mindvault-focus)] disabled:cursor-not-allowed disabled:opacity-60"
             >
                 {loading ? "Setting up a demo account…" : "Continue as guest"}
             </button>

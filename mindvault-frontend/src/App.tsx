@@ -11,6 +11,7 @@ import { Signup } from "./pages/Signup";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SharedBrain } from "./pages/SharedBrain";
 import { GuestLogin } from "./pages/GuestLogin";
+import { AuthCallback } from "./pages/AuthCallback";
 
 function App() {
     return (
@@ -29,6 +30,12 @@ function App() {
                 <Route
                     path="/signin"
                     element={<Signin />}
+                />
+
+                {/* Google/GitHub sign-in returns here with the token */}
+                <Route
+                    path="/auth/callback"
+                    element={<AuthCallback />}
                 />
 
                 {/* One-click demo account, e.g. for a resume link */}

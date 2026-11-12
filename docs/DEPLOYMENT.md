@@ -14,6 +14,9 @@ The current deployment setup uses Vercel for the frontend and a separately hoste
 | `JWT_SECRET` | Required; use a strong, random secret | `replace_with_a_random_secret` (placeholder only; replace it) |
 | `FRONTEND_URL` | Allowed frontend origin for CORS; required in production | `http://localhost:5173` |
 | `TRUST_PROXY` | Optional; number of reverse proxies in front of the API, used so rate limiting sees real client IPs. Defaults to `1` in production (correct for Render) and `0` otherwise | unset |
+| `API_PUBLIC_URL` | Public origin of this API, used to build OAuth callback URLs. Required in production when Google or GitHub sign-in is enabled | `http://localhost:3000` |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional; enables "Continue with Google" when both are set | unset |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Optional; enables "Continue with GitHub" when both are set | unset |
 
 `mindvault-backend/src/config.ts` throws during startup if `JWT_SECRET` is missing, and in production if `MONGO_URI` or `FRONTEND_URL` is missing.
 
@@ -44,9 +47,30 @@ Do not include `/api/v1` in `VITE_API_URL`, or the frontend would append it a se
 
 The backend's source starts the listener after a successful MongoDB connection. No dedicated health-check route was found in the audited route configuration; do not configure a health-check path unless one is added and verified.
 
+## Google and GitHub sign-in (optional)
+
+Both are free. Each button appears only once its client ID and secret are set on the backend. The callback URL must match exactly, including `https` and the absence of a trailing slash. Replace `<API>` below with the backend's public origin (the value of `API_PUBLIC_URL`, e.g. your Render URL); for local development it is `http://localhost:3000`.
+
+### Google
+
+1. Open the Google Cloud Console, create (or pick) a project, and go to **APIs & Services → OAuth consent screen**. Choose **External**, fill in the app name and support email, and add the scopes `openid`, `email` and `profile`. Publish the app (or add your own Google account as a test user while it is in testing).
+2. Go to **APIs & Services → Credentials → Create credentials → OAuth client ID**, application type **Web application**.
+3. Under **Authorized redirect URIs**, add `<API>/api/v1/auth/google/callback` (add the localhost one too if you develop locally).
+4. Copy the client ID and secret into `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+
+### GitHub
+
+1. Go to **GitHub → Settings → Developer settings → OAuth Apps → New OAuth App**.
+2. **Homepage URL:** the frontend URL. **Authorization callback URL:** `<API>/api/v1/auth/github/callback`. GitHub allows one callback per app, so create a separate app for local development.
+3. Generate a client secret and copy both values into `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`.
+
+Then set `API_PUBLIC_URL` and the four credentials in the backend's environment settings on Render and redeploy. The frontend needs no changes.
+
+Accounts created this way get a username from the Google email or GitHub login (with a number added if it's taken) and have no password, so they can only sign in with that provider. Existing username/password accounts are not linked automatically.
+
 ## Safe deployment checklist
 
-- Never commit `mindvault-backend/.env` or production secrets.
+- Never commit `mindvault-backend/.env` or production secrets, including OAuth client secrets.
 - Keep `.env.example` values as local placeholders only.
 - Ensure `FRONTEND_URL` exactly matches the browser origin allowed by CORS.
 - Ensure `VITE_API_URL` points to the backend origin and is configured before the frontend build.
