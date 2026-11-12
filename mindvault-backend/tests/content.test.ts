@@ -344,4 +344,26 @@ describe("Mind Vault content API", () => {
         expect(existing.link).toBe("");
         expect(save).toHaveBeenCalled();
     });
+
+    it("lists content pinned first, then newest first", async () => {
+        const items = [{ _id: "b" }, { _id: "a" }];
+        const query = {
+            sort: vi.fn(() => query),
+            populate: vi.fn(() => query),
+            then: (resolve: (value: unknown) => unknown) => resolve(items),
+        };
+        vi.mocked(ContentModel.find).mockReturnValue(query as never);
+
+        const response = await request(app)
+            .get("/api/v1/content")
+            .set("Authorization", `Bearer ${getAuthToken()}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.content).toEqual(items);
+        expect(query.sort).toHaveBeenCalledWith({
+            isPinned: -1,
+            createdAt: -1,
+            _id: -1,
+        });
+    });
 });

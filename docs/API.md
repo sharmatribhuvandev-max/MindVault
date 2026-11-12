@@ -50,7 +50,7 @@ All paths below are relative to `/api/v1` and require authentication.
 | Method | Path | Purpose | Body / notes |
 |---|---|---|---|
 | `POST` | `/content` | Create content | `title`, `type`, `link` (not needed for notes); optional `body`, `tags` array, `collectionId`, `notes` |
-| `GET` | `/content` | List the current user's content | Returns `{ "content": [...] }` |
+| `GET` | `/content` | List the current user's content | Returns `{ "content": [...] }`, pinned items first, then newest first |
 | `PUT` | `/content/:id` | Update content | `title`, `type`, `link` (not needed for notes); optional `body`, `tags`, `collectionId`, `notes` |
 | `PATCH` | `/content/:id/favorite` | Set favorite state | `{ "isFavorite": true }` or `false` |
 | `PATCH` | `/content/:id/pin` | Set pinned state | `{ "isPinned": true }` or `false` |
@@ -87,7 +87,7 @@ Collection names are required and limited to 50 characters. Duplicate names retu
 | `POST` | `/brain/share` | Required | Enable or disable public sharing | `{ "share": true }` or `{ "share": false }` |
 | `GET` | `/:shareLink` | Public | Read a shared Brain | No body required |
 
-Enabling sharing returns `{ "hash": "..." }`; if a link already exists, its hash is returned. Disabling sharing deletes the user's link and returns `{ "message": "Removed Link" }`. The public endpoint returns `{ "username": "...", "content": [...] }` for all content owned by the account associated with the share link; the query explicitly excludes each content item's `notes` field. The current implementation does not support selecting only certain items for sharing. A missing/invalid share link returns HTTP 404.
+Enabling sharing returns `{ "hash": "..." }`; if a link already exists, its hash is returned. Disabling sharing deletes the user's link and returns `{ "message": "Removed Link" }`. The public endpoint returns `{ "username": "...", "content": [...] }` (pinned first, then newest first) for all content owned by the account associated with the share link; the query explicitly excludes each content item's `notes` field. The current implementation does not support selecting only certain items for sharing. A missing/invalid share link returns HTTP 404.
 
 ## Common errors
 

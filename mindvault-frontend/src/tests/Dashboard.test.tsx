@@ -294,6 +294,37 @@ describe('Dashboard component', () => {
         expect(screen.getByRole('button', { name: 'Disable Sharing' })).toBeInTheDocument()
     })
 
+    it('shows pinned items first, then newest, and remembers the chosen sort', async () => {
+        localStorage.removeItem('contentSort')
+        const dated = [
+            { ...sampleContents[0], _id: 'a', title: 'Alpha', isPinned: false, createdAt: '2026-01-01T00:00:00Z' },
+            { ...sampleContents[0], _id: 'b', title: 'Beta', isPinned: false, createdAt: '2026-03-01T00:00:00Z' },
+            { ...sampleContents[0], _id: 'z', title: 'Zebra', isPinned: true, createdAt: '2025-01-01T00:00:00Z' },
+        ]
+        vi.mocked(useContent).mockReturnValue({
+            contents: dated,
+            refresh: mockRefresh,
+            error: null,
+        } as never)
+        const user = userEvent.setup()
+
+        const { unmount } = render(<Dashboard />)
+
+        const cardTitles = () =>
+            screen.getAllByTestId('content-card').map((card) => card.querySelector('h2')?.textContent)
+
+        expect(cardTitles()).toEqual(['Zebra', 'Beta', 'Alpha'])
+
+        await user.selectOptions(screen.getByLabelText('Sort saved content'), 'title')
+        expect(cardTitles()).toEqual(['Zebra', 'Alpha', 'Beta'])
+        expect(localStorage.getItem('contentSort')).toBe('title')
+
+        unmount()
+        render(<Dashboard />)
+        expect(screen.getByLabelText('Sort saved content')).toHaveValue('title')
+        expect(cardTitles()).toEqual(['Zebra', 'Alpha', 'Beta'])
+    })
+
     it('logs out by revoking the token on the server, removing it, and navigating to signin', async () => {
         vi.mocked(axios.post).mockResolvedValue({ data: { message: 'Logged out' } })
         const user = userEvent.setup()

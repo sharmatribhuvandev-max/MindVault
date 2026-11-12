@@ -25,7 +25,7 @@ Live frontend: <https://mindvault-ruddy.vercel.app>
 - Save YouTube videos, Twitter/X posts, GitHub repos and profiles, Instagram and LinkedIn posts, articles from any site, and plain-text notes. The type is detected automatically from the pasted link.
 - Edit saved items and organize them with tags and collections.
 - Add private notes to saved items.
-- Mark items as favorites or pinned.
+- Mark items as favorites or pinned. Pinned items stay at the top; the rest are newest first, or sorted oldest first or A–Z.
 - Create and revoke a public sharing link for your saved content.
 - Browse a shared Brain; private notes are excluded from the public API response.
 - Responsive React dashboard.

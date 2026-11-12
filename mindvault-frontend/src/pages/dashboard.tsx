@@ -6,6 +6,14 @@ import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { CreateContentModal } from "../components/CreateContentModal";
 import { ShareDialog } from "../components/ShareDialog";
+import {
+    SORT_OPTIONS,
+    isSortOrder,
+    loadSortOrder,
+    saveSortOrder,
+    sortContents,
+    type SortOrder,
+} from "../sortContent";
 
 import { PlusIcon } from "../icons/PlusIcon";
 import { ShareIcon } from "../icons/ShareIcon";
@@ -197,11 +205,21 @@ export default function Dashboard() {
         };
     }, [modalOpen, refresh, loadCollections]);
 
+    const [sortOrder, setSortOrder] =
+        useState<SortOrder>(loadSortOrder);
+
+    function changeSortOrder(value: string) {
+        if (isSortOrder(value)) {
+            setSortOrder(value);
+            saveSortOrder(value);
+        }
+    }
+
     const filteredContents = useMemo(() => {
         const query =
             searchQuery.trim().toLowerCase();
 
-        return contents.filter(
+        const matching = contents.filter(
             (content: Content) => {
                 const matchesType =
                     selectedType === "all" ||
@@ -253,11 +271,14 @@ export default function Dashboard() {
                 );
             }
         );
+
+        return sortContents(matching, sortOrder);
     }, [
         contents,
         searchQuery,
         selectedType,
         selectedCollectionId,
+        sortOrder,
     ]);
 
     const [loggingOut, setLoggingOut] =
@@ -1015,6 +1036,24 @@ export default function Dashboard() {
                                 className="dashboard-search w-full border bg-white py-3 pl-10 pr-4 outline-none"
                             />
                         </div>
+
+                        <label className="dashboard-sort">
+                            <span className="dashboard-sort-label">Sort</span>
+                            <select
+                                value={sortOrder}
+                                onChange={(event) =>
+                                    changeSortOrder(event.target.value)
+                                }
+                                aria-label="Sort saved content"
+                                className="dashboard-sort-select"
+                            >
+                                {SORT_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
                     </section>
 
                     <nav className="dashboard-filters" aria-label="Filter saved content">

@@ -158,10 +158,12 @@ async function seedGuestData(userId: mongoose.Types.ObjectId) {
         collections.map((collection) => [collection.name, collection._id])
     );
 
-    // The dashboard lists items in insertion order, so the welcome note
-    // (first in SEED_CONTENT) shows up first.
+    // Lists are newest first, so give each item a creation time a minute
+    // older than the one before it: SEED_CONTENT order is display order.
+    const now = Date.now();
+
     await ContentModel.insertMany(
-        SEED_CONTENT.map((item) => ({
+        SEED_CONTENT.map((item, index) => ({
             title: item.title,
             type: item.type,
             link: item.link ?? "",
@@ -174,6 +176,7 @@ async function seedGuestData(userId: mongoose.Types.ObjectId) {
             collectionId: item.collection
                 ? collectionIds.get(item.collection) ?? null
                 : null,
+            createdAt: new Date(now - index * 60_000),
         }))
     );
 }

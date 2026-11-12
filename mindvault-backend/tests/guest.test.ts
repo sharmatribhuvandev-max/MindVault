@@ -122,6 +122,13 @@ describe("Guest sign-in", () => {
             expect(item.tags.every(Boolean)).toBe(true);
         }
 
+        // Creation times step back a minute per item, so newest-first
+        // sorting shows them in seed order.
+        const times = items.map((item) => (item as unknown as { createdAt: Date }).createdAt.getTime());
+        for (let i = 1; i < times.length; i++) {
+            expect(times[i - 1]! - times[i]!).toBe(60_000);
+        }
+
         const types = new Set(items.map((item) => item.type));
         for (const type of ["youtube", "twitter", "article", "note", "github"]) {
             expect(types.has(type)).toBe(true);
