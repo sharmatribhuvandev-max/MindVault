@@ -210,4 +210,27 @@ expect(
 
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+
+  it('does not render a logout button without an onLogout handler', () => {
+    render(<Sidebar {...defaultProps} />)
+
+    expect(screen.queryByRole('button', { name: /Logout/i })).not.toBeInTheDocument()
+  })
+
+  it('calls onLogout when the logout button is clicked', async () => {
+    const user = userEvent.setup()
+    const onLogout = vi.fn()
+
+    render(<Sidebar {...defaultProps} onLogout={onLogout} />)
+
+    await user.click(screen.getByRole('button', { name: 'Logout' }))
+
+    expect(onLogout).toHaveBeenCalledTimes(1)
+  })
+
+  it('disables the logout button while logging out', () => {
+    render(<Sidebar {...defaultProps} onLogout={vi.fn()} loggingOut />)
+
+    expect(screen.getByRole('button', { name: /Logging out/i })).toBeDisabled()
+  })
 })

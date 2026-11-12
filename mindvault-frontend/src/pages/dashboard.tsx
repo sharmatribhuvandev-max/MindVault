@@ -202,10 +202,42 @@ export default function Dashboard() {
         selectedCollectionId,
     ]);
 
-    function logout() {
+    const [loggingOut, setLoggingOut] =
+        useState(false);
+
+    async function logout() {
+        if (loggingOut) {
+            return;
+        }
+
+        setLoggingOut(true);
+
+        const token =
+            localStorage.getItem("token");
+
+        // Revoke the token on the server so a copied token stops working.
+        // Even if this fails (offline, server down), still sign out locally.
+        if (token) {
+            try {
+                await axios.post(
+                    `${BACKEND_URL}/api/v1/logout`,
+                    {},
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`,
+                        },
+                        timeout: 5000,
+                    }
+                );
+            } catch (error) {
+                console.error("Server logout failed:", error);
+            }
+        }
+
         localStorage.removeItem("token");
 
-        navigate("/signin");
+        navigate("/signin", { replace: true });
     }
 
     async function createShareLink() {
@@ -769,6 +801,8 @@ export default function Dashboard() {
                     }
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
+                    onLogout={logout}
+                    loggingOut={loggingOut}
                 />
 
                 <main className="dashboard-main">
@@ -869,12 +903,6 @@ export default function Dashboard() {
                                     }
                                 />
                             )}
-
-                            <Button
-                                onClick={logout}
-                                variant="secondary"
-                                text="Logout"
-                            />
                         </div>
                     </header>
 

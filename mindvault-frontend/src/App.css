@@ -232,6 +232,25 @@
   overflow-y: auto;
 }
 
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--mindvault-border);
+  padding-top: 0.75rem;
+}
+
+.sidebar-logout {
+  color: #b42318;
+}
+
+.sidebar-logout:hover:not(:disabled) {
+  background: #fef3f2;
+}
+
+.sidebar-logout:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .sidebar-item {
   min-height: 2.75rem;
   max-width: 100%;

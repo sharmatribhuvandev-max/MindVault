@@ -12,6 +12,7 @@ import jwt from "jsonwebtoken";
 vi.mock("../src/db.js", () => ({
     UserModel: {
         findOne: vi.fn(),
+        findById: vi.fn().mockResolvedValue({ tokenVersion: 0 }),
     },
     TagModel: {},
     CollectionModel: {},
