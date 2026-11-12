@@ -17,6 +17,7 @@ The JWT is issued by sign-in and currently expires after one hour. All user-owne
 | `POST` | `/signup` | Public | Create an account |
 | `POST` | `/signin` | Public | Sign in and receive a JWT |
 | `POST` | `/logout` | Required | Revoke the user's tokens |
+| `GET` | `/me` | Required | Get the signed-in user's username |
 
 Signup/signin request body:
 
@@ -32,6 +33,8 @@ Both routes are rate-limited per client IP and return HTTP 429 with a `Retry-Aft
 - `/signup`: 10 requests per hour.
 
 `/logout` takes no body and returns `{ "message": "Logged out" }`. It invalidates **every** token issued to that user so far, on all devices, not just the one sent with the request: each token carries the user's token version, and logout increments it. Any request made with an older token then gets HTTP 401.
+
+`/me` returns `{ "username": "..." }` for the signed-in user.
 
 ## Content
 

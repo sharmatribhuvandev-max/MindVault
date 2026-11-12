@@ -215,4 +215,24 @@ describe("Mind Vault authentication API", () => {
         expect(response.status).toBe(500);
         consoleError.mockRestore();
     });
+
+    it("returns the signed-in user's username", async () => {
+        vi.mocked(UserModel.findById).mockResolvedValue({
+            tokenVersion: 0,
+            username: "testuser",
+        } as never);
+
+        const response = await request(app)
+            .get("/api/v1/me")
+            .set("Authorization", `Bearer ${tokenWithVersion(0)}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ username: "testuser" });
+    });
+
+    it("rejects /me without a token", async () => {
+        const response = await request(app).get("/api/v1/me");
+
+        expect(response.status).toBe(401);
+    });
 });
