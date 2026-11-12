@@ -2,6 +2,7 @@ import axios from "axios";
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { GuestButton } from "../components/GuestButton";
 import { Input } from "../components/Input";
 import { BACKEND_URL } from "../config";
 
@@ -162,6 +163,8 @@ export function Signup() {
                         {loading ? "Creating account…" : "Create account"}
                     </button>
                 </form>
+
+                <GuestButton />
 
                 <p className="mt-6 text-center text-sm text-[var(--mindvault-muted)]">
                     Already have an account?{" "}

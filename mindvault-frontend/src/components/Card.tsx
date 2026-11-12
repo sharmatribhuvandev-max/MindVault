@@ -1,13 +1,22 @@
 import { useEffect, useRef } from "react";
 
 import { ShareIcon } from "../icons/ShareIcon";
+import { ArticleIcon } from "../icons/ArticleIcon";
+import { getDisplayDomain, type ContentType } from "../contentTypes";
+import {
+    GitHubEmbed,
+    InstagramEmbed,
+    LinkCard,
+    LinkedInEmbed,
+} from "./Embeds";
 
 interface CardProps {
     id: string;
     title: string;
     link: string;
-    type: "twitter" | "youtube";
+    type: ContentType;
     notes?: string;
+    body?: string;
     isFavorite?: boolean;
     isPinned?: boolean;
 
@@ -107,6 +116,7 @@ export function Card({
     link,
     type,
     notes = "",
+    body = "",
     isFavorite = false,
     isPinned = false,
     onFavorite,
@@ -273,18 +283,20 @@ export function Card({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-                        <div className="text-slate-500">
-                            <a
-                                href={link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label={`Open ${title} in a new tab`}
-                                title="Open original link"
-                                className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                            >
-                                <ShareIcon />
-                            </a>
-                        </div>
+                        {link && (
+                            <div className="text-slate-500">
+                                <a
+                                    href={link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`Open ${title} in a new tab`}
+                                    title="Open original link"
+                                    className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                >
+                                    <ShareIcon />
+                                </a>
+                            </div>
+                        )}
 
                         {!isPublic && (
                             <>
@@ -465,6 +477,31 @@ export function Card({
                                 </a>
                             </div>
                         )}
+
+                    {type === "article" && (
+                        <LinkCard
+                            href={link}
+                            icon={<ArticleIcon />}
+                            primary={getDisplayDomain(link) ?? link}
+                            secondary="Read article →"
+                        />
+                    )}
+
+                    {type === "github" && <GitHubEmbed link={link} />}
+
+                    {type === "instagram" && (
+                        <InstagramEmbed link={link} title={title} />
+                    )}
+
+                    {type === "linkedin" && (
+                        <LinkedInEmbed link={link} title={title} />
+                    )}
+
+                    {type === "note" && (
+                        <p className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-amber-50 p-3 text-sm leading-relaxed text-slate-800 sm:p-4">
+                            {body}
+                        </p>
+                    )}
 
                     {type === "twitter" &&
                         twitterUrlType ===

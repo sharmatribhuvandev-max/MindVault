@@ -18,7 +18,15 @@ import axios from "axios";
 
 import { BACKEND_URL } from "../config";
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+import { clearGuestSession, isGuestSession } from "../guestSession";
+
+import {
+    CONTENT_TYPES,
+    CONTENT_TYPE_LABELS,
+    isContentType,
+} from "../contentTypes";
 
 import type {
     Collection,
@@ -83,6 +91,8 @@ export default function Dashboard() {
     const { contents, refresh, error: contentError } = useContent();
     const navigate = useNavigate();
 
+    const [isGuest] = useState(isGuestSession);
+
     // Returns the user's collections, or null on failure.
     const loadCollections = useCallback(async (): Promise<Collection[] | null> => {
         const token =
@@ -121,6 +131,46 @@ export default function Dashboard() {
             return null;
         }
     }, [navigate]);
+
+    const [username, setUsername] =
+        useState<string | null>(null);
+
+    // Load the signed-in user's name once, for the sidebar.
+    useEffect(() => {
+        let ignore = false;
+        const token =
+            localStorage.getItem("token");
+
+        if (!token) {
+            return;
+        }
+
+        axios
+            .get(`${BACKEND_URL}/api/v1/me`, {
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`,
+                },
+            })
+            .then((response) => {
+                const name = response.data?.username;
+
+                if (!ignore && typeof name === "string") {
+                    setUsername(name);
+                }
+            })
+            .catch((error) => {
+                // Not critical: the sidebar just shows no name.
+                console.error(
+                    "Failed to fetch current user:",
+                    error
+                );
+            });
+
+        return () => {
+            ignore = true;
+        };
+    }, []);
 
     async function fetchCollections() {
         const loaded = await loadCollections();
@@ -189,6 +239,9 @@ export default function Dashboard() {
                         .includes(query) ||
                     (content.notes || "")
                         .toLowerCase()
+                        .includes(query) ||
+                    (content.body || "")
+                        .toLowerCase()
                         .includes(query);
 
                 return (
@@ -207,10 +260,43 @@ export default function Dashboard() {
         selectedCollectionId,
     ]);
 
-    function logout() {
-        localStorage.removeItem("token");
+    const [loggingOut, setLoggingOut] =
+        useState(false);
 
-        navigate("/signin");
+    async function logout() {
+        if (loggingOut) {
+            return;
+        }
+
+        setLoggingOut(true);
+
+        const token =
+            localStorage.getItem("token");
+
+        // Revoke the token on the server so a copied token stops working.
+        // Even if this fails (offline, server down), still sign out locally.
+        if (token) {
+            try {
+                await axios.post(
+                    `${BACKEND_URL}/api/v1/logout`,
+                    {},
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`,
+                        },
+                        timeout: 5000,
+                    }
+                );
+            } catch (error) {
+                console.error("Server logout failed:", error);
+            }
+        }
+
+        localStorage.removeItem("token");
+        clearGuestSession();
+
+        navigate("/signin", { replace: true });
     }
 
     const closeShareDialog = useCallback(() => {
@@ -646,6 +732,7 @@ export default function Dashboard() {
             type: content.type,
             tags: content.tags || [],
             notes: content.notes || "",
+            body: content.body || "",
             isFavorite: content.isFavorite,
             isPinned: content.isPinned,
             collectionId: content.collectionId,
@@ -720,22 +807,12 @@ export default function Dashboard() {
             };
         }
 
-        if (selectedType === "youtube") {
-            return {
-                title:
-                    "No YouTube content found.",
-                message:
-                    "Try adding some YouTube content.",
-                showAddButton: false,
-            };
-        }
+        if (isContentType(selectedType)) {
+            const label = CONTENT_TYPE_LABELS[selectedType];
 
-        if (selectedType === "twitter") {
             return {
-                title:
-                    "No Twitter content found.",
-                message:
-                    "Try adding some Twitter content.",
+                title: `No ${label} content found.`,
+                message: `Try adding some ${label} content.`,
                 showAddButton: false,
             };
         }
@@ -771,9 +848,30 @@ export default function Dashboard() {
                     }
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
+                    username={username}
+                    onLogout={logout}
+                    loggingOut={loggingOut}
                 />
 
                 <main className="dashboard-main">
+                    {isGuest && (
+                        <div
+                            className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900"
+                            role="status"
+                        >
+                            <span>
+                                <strong>You're exploring a demo account.</strong>{" "}
+                                Add, edit or delete anything. It's all reset after 24 hours.
+                            </span>
+                            <Link
+                                to="/signup"
+                                className="font-semibold text-violet-700 underline-offset-4 hover:underline"
+                            >
+                                Create your own account →
+                            </Link>
+                        </div>
+                    )}
+
                     <div className="dashboard-mobile-toolbar">
                         <button
                             type="button"
@@ -815,6 +913,8 @@ export default function Dashboard() {
                                         editingContent.tags,
                                     notes:
                                         editingContent.notes || "",
+                                    body:
+                                        editingContent.body || "",
                                     collectionId:
                                         typeof editingContent.collectionId ===
                                             "string"
@@ -875,12 +975,6 @@ export default function Dashboard() {
                                     text="Disable Sharing"
                                 />
                             )}
-
-                            <Button
-                                onClick={logout}
-                                variant="secondary"
-                                text="Logout"
-                            />
                         </div>
                     </header>
 
@@ -939,35 +1033,21 @@ export default function Dashboard() {
                             All
                         </button>
 
-                        <button
-                            onClick={() =>
-                                setSelectedType(
-                                    "youtube"
-                                )
-                            }
-                            className={`px-4 py-2 rounded-md border ${selectedType ===
-                                "youtube"
-                                ? "bg-black text-white"
-                                : "bg-white text-gray-700"
-                                }`}
-                        >
-                            YouTube
-                        </button>
-
-                        <button
-                            onClick={() =>
-                                setSelectedType(
-                                    "twitter"
-                                )
-                            }
-                            className={`px-4 py-2 rounded-md border ${selectedType ===
-                                "twitter"
-                                ? "bg-black text-white"
-                                : "bg-white text-gray-700"
-                                }`}
-                        >
-                            Twitter
-                        </button>
+                        {CONTENT_TYPES.map((type) => (
+                            <button
+                                key={type}
+                                onClick={() =>
+                                    setSelectedType(type)
+                                }
+                                className={`px-4 py-2 rounded-md border ${selectedType ===
+                                    type
+                                    ? "bg-black text-white"
+                                    : "bg-white text-gray-700"
+                                    }`}
+                            >
+                                {CONTENT_TYPE_LABELS[type]}
+                            </button>
+                        ))}
 
                         <button
                             onClick={() =>
@@ -1010,6 +1090,7 @@ export default function Dashboard() {
                                     link,
                                     title,
                                     notes,
+                                    body,
                                     isFavorite,
                                     isPinned,
                                 }: Content) => (
@@ -1020,6 +1101,7 @@ export default function Dashboard() {
                                         link={link}
                                         title={title}
                                         notes={notes || ""}
+                                        body={body || ""}
                                         isFavorite={
                                             isFavorite
                                         }

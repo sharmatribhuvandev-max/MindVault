@@ -1,4 +1,6 @@
-export type ContentType = "twitter" | "youtube";
+import type { ContentType } from "./contentTypes";
+
+export type { ContentType };
 
 export interface Tag {
     _id: string;
@@ -19,5 +21,6 @@ export interface Content {
     isFavorite: boolean;
     isPinned: boolean;
     notes?: string;
+    body?: string;
     collectionId: string | Collection | null;
 }

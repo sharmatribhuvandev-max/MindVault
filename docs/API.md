@@ -16,6 +16,9 @@ The JWT is issued by sign-in and currently expires after one hour. All user-owne
 |---|---|---|---|
 | `POST` | `/signup` | Public | Create an account |
 | `POST` | `/signin` | Public | Sign in and receive a JWT |
+| `POST` | `/guest` | Public | Create a temporary demo account and receive a JWT |
+| `POST` | `/logout` | Required | Revoke the user's tokens |
+| `GET` | `/me` | Required | Get the signed-in user's username |
 
 Signup/signin request body:
 
@@ -29,6 +32,13 @@ Both routes are rate-limited per client IP and return HTTP 429 with a `Retry-Aft
 
 - `/signin`: 10 failed attempts per 15 minutes (successful sign-ins are not counted).
 - `/signup`: 10 requests per hour.
+- `/guest`: 10 requests per hour.
+
+`/guest` takes no body. It creates a `guest-xxxxxxxx` account with a random, never-revealed password, fills it with sample tags, collections and content, and returns `{ "token": "...", "username": "guest-...", "guest": true, "expiresAt": "<ISO date>" }`. Guest accounts expire after 24 hours; each new guest request deletes up to 100 expired guest accounts and all their content, tags, collections and share links. Usernames starting with `guest-` are reserved and rejected by `/signup`.
+
+`/logout` takes no body and returns `{ "message": "Logged out" }`. It invalidates **every** token issued to that user so far, on all devices, not just the one sent with the request: each token carries the user's token version, and logout increments it. Any request made with an older token then gets HTTP 401.
+
+`/me` returns `{ "username": "..." }` for the signed-in user.
 
 ## Content
 
@@ -36,14 +46,14 @@ All paths below are relative to `/api/v1` and require authentication.
 
 | Method | Path | Purpose | Body / notes |
 |---|---|---|---|
-| `POST` | `/content` | Create content | `title`, `link`, `type`; optional `tags` array, `collectionId`, `notes` |
+| `POST` | `/content` | Create content | `title`, `type`, `link` (not needed for notes); optional `body`, `tags` array, `collectionId`, `notes` |
 | `GET` | `/content` | List the current user's content | Returns `{ "content": [...] }` |
-| `PUT` | `/content/:id` | Update content | `title`, `link`, `type`; optional `tags`, `collectionId`, `notes` |
+| `PUT` | `/content/:id` | Update content | `title`, `type`, `link` (not needed for notes); optional `body`, `tags`, `collectionId`, `notes` |
 | `PATCH` | `/content/:id/favorite` | Set favorite state | `{ "isFavorite": true }` or `false` |
 | `PATCH` | `/content/:id/pin` | Set pinned state | `{ "isPinned": true }` or `false` |
 | `DELETE` | `/content` | Delete content | `{ "contentId": "<content-id>" }` |
 
-Supported `type` values are `youtube` and `twitter`. `link` must be a valid HTTP or HTTPS URL. `title` is required. Notes are optional and limited to 2,000 characters. Tag IDs and collection IDs must belong to the authenticated user. For updates, omitted `notes`, `tags`, or `collectionId` are not all equivalent: consult `content.controller.ts` when implementing partial-update clients.
+Supported `type` values are `youtube`, `twitter`, `article`, `note`, `github`, `instagram` and `linkedin` (defined in `src/content-types.ts`). `title` is required. `link` must be a valid HTTP or HTTPS URL; it is required for every type except `note`, where it is optional and stored as `""` when omitted. `body` is the text of a note: it is required (non-empty) for `note`, limited to 5,000 characters, and, unlike `notes`, is included on public shared pages. On update, an omitted `body` keeps the existing one. `notes` are private, optional and limited to 2,000 characters. Tag IDs and collection IDs must belong to the authenticated user. For updates, omitted `notes`, `tags`, or `collectionId` are not all equivalent: consult `content.controller.ts` when implementing partial-update clients.
 
 Successful create returns `{ "message": "Content added" }`. Update and state-change endpoints return a message and updated content. Delete returns `{ "message": "Deleted" }`.
 

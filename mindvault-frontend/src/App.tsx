@@ -10,6 +10,7 @@ import { Signin } from "./pages/Signin";
 import { Signup } from "./pages/Signup";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SharedBrain } from "./pages/SharedBrain";
+import { GuestLogin } from "./pages/GuestLogin";
 
 function App() {
     return (
@@ -28,6 +29,12 @@ function App() {
                 <Route
                     path="/signin"
                     element={<Signin />}
+                />
+
+                {/* One-click demo account, e.g. for a resume link */}
+                <Route
+                    path="/guest"
+                    element={<GuestLogin />}
                 />
 
                 {/* Public shared Brain route */}
